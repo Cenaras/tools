@@ -123,7 +123,7 @@ func (a *analysis) renumber() {
 	for _, cgn := range a.cgnodes {
 		cgn.obj = renumbering[cgn.obj]
 		for _, site := range cgn.sites {
-			site.targets = renumbering[site.targets]
+			site.SetTargets(renumbering[site.Targets()])
 		}
 	}
 

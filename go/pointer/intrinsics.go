@@ -286,11 +286,12 @@ func (c *runtimeSetFinalizerConstraint) solve(a *analysis, delta *nodeset) {
 
 func ext۰runtime۰SetFinalizer(a *analysis, cgn *cgnode) {
 	// This is the shared contour, used for dynamic calls.
-	targets := a.addOneNode(tInvalid, "SetFinalizer.targets", nil)
-	cgn.sites = append(cgn.sites, &callsite{targets: targets})
+	context := EmptyContext()
+	context.SetTargets(a.addOneNode(tInvalid, "SetFinalizer.targets", nil))
+	cgn.sites = append(cgn.sites, context)
 	params := a.funcParams(cgn.obj)
 	a.addConstraint(&runtimeSetFinalizerConstraint{
-		targets: targets,
+		targets: context.Targets(),
 		x:       params,
 		f:       params + 1,
 	})
@@ -349,11 +350,12 @@ func (c *timeStartTimerConstraint) solve(a *analysis, delta *nodeset) {
 
 func ext۰time۰startTimer(a *analysis, cgn *cgnode) {
 	// This is the shared contour, used for dynamic calls.
-	targets := a.addOneNode(tInvalid, "startTimer.targets", nil)
-	cgn.sites = append(cgn.sites, &callsite{targets: targets})
+	context := EmptyContext()
+	context.SetTargets(a.addOneNode(tInvalid, "SetFinalizer.targets", nil))
+	cgn.sites = append(cgn.sites, context)
 	params := a.funcParams(cgn.obj)
 	a.addConstraint(&timeStartTimerConstraint{
-		targets: targets,
+		targets: context.Targets(),
 		t:       params,
 	})
 }

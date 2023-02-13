@@ -309,14 +309,14 @@ func (c *rVCallConstraint) solve(a *analysis, delta *nodeset) {
 }
 
 // Common code for direct (inlined) and indirect calls to (reflect.Value).Call.
-func reflectCallImpl(a *analysis, cgn *cgnode, site *callsite, recv, arg nodeid, dotdotdot bool) nodeid {
+func reflectCallImpl(a *analysis, cgn *cgnode, context context, recv, arg nodeid, dotdotdot bool) nodeid {
 	// Allocate []reflect.Value array for the result.
 	ret := a.nextNode()
 	a.addNodes(types.NewArray(a.reflectValueObj.Type(), 1), "rVCall.ret")
 	a.endObject(ret, cgn, nil)
 
 	// pts(targets) will be the set of possible call targets.
-	site.targets = a.addOneNode(tInvalid, "rvCall.targets", nil)
+	context.SetTargets(a.addOneNode(tInvalid, "rvCall.targets", nil))
 
 	// All arguments are merged since they arrive in a slice.
 	argelts := a.addOneNode(a.reflectValueObj.Type(), "rVCall.args", nil)
@@ -324,7 +324,7 @@ func reflectCallImpl(a *analysis, cgn *cgnode, site *callsite, recv, arg nodeid,
 
 	a.addConstraint(&rVCallConstraint{
 		cgn:       cgn,
-		targets:   site.targets,
+		targets:   context.Targets(),
 		v:         recv,
 		arg:       argelts,
 		result:    ret + 1, // results go into elements of ret
@@ -338,11 +338,11 @@ func reflectCall(a *analysis, cgn *cgnode, dotdotdot bool) {
 	// and CallSlice, as used by indirect calls (rare).
 	// Direct calls are inlined in gen.go, eliding the
 	// intermediate cgnode for Call.
-	site := new(callsite)
-	cgn.sites = append(cgn.sites, site)
+	context := EmptyContext()
+	cgn.sites = append(cgn.sites, context)
 	recv := a.funcParams(cgn.obj)
 	arg := recv + 1
-	ret := reflectCallImpl(a, cgn, site, recv, arg, dotdotdot)
+	ret := reflectCallImpl(a, cgn, context, recv, arg, dotdotdot)
 	a.addressOf(cgn.fn.Signature.Results().At(0).Type(), a.funcResults(cgn.obj), ret)
 }
 
@@ -1022,8 +1022,8 @@ func ext۰reflect۰ChanOf(a *analysis, cgn *cgnode) {
 	// and the channel argument is a constant (as is usual),
 	// only generate the requested direction.
 	var dir reflect.ChanDir // unknown
-	if site := cgn.callersite; site != nil {
-		if c, ok := site.instr.Common().Args[0].(*ssa.Const); ok {
+	if context := cgn.callercontext; context != nil {
+		if c, ok := context.Instr().Common().Args[0].(*ssa.Const); ok {
 			v := c.Int64()
 			if 0 <= v && v <= int64(reflect.BothDir) {
 				dir = reflect.ChanDir(v)
@@ -1331,8 +1331,8 @@ func ext۰reflect۰NewAt(a *analysis, cgn *cgnode) {
 	ext۰reflect۰New(a, cgn)
 
 	// TODO(adonovan): also report dynamic calls to unsound intrinsics.
-	if site := cgn.callersite; site != nil {
-		a.warnf(site.pos(), "unsound: %s contains a reflect.NewAt() call", site.instr.Parent())
+	if context := cgn.callercontext; context != nil {
+		a.warnf(context.Pos(), "unsound: %s contains a reflect.NewAt() call", context.Instr().Parent())
 	}
 }
 
@@ -1666,8 +1666,8 @@ func ext۰reflect۰rtype۰FieldByName(a *analysis, cgn *cgnode) {
 	// and the argument is a string constant,
 	// return only that field.
 	var name string
-	if site := cgn.callersite; site != nil {
-		if c, ok := site.instr.Common().Args[0].(*ssa.Const); ok {
+	if context := cgn.callercontext; context != nil {
+		if c, ok := context.Instr().Common().Args[0].(*ssa.Const); ok {
 			name = constant.StringVal(c.Value)
 		}
 	}
@@ -1749,8 +1749,8 @@ func ext۰reflect۰rtype۰InOut(a *analysis, cgn *cgnode, out bool) {
 	// and the argument is an int constant,
 	// return only that parameter.
 	index := -1
-	if site := cgn.callersite; site != nil {
-		if c, ok := site.instr.Common().Args[0].(*ssa.Const); ok {
+	if context := cgn.callercontext; context != nil {
+		if c, ok := context.Instr().Common().Args[0].(*ssa.Const); ok {
 			index = int(c.Int64())
 		}
 	}
@@ -1907,8 +1907,8 @@ func ext۰reflect۰rtype۰MethodByName(a *analysis, cgn *cgnode) {
 	// and the argument is a string constant,
 	// return only that method.
 	var name string
-	if site := cgn.callersite; site != nil {
-		if c, ok := site.instr.Common().Args[0].(*ssa.Const); ok {
+	if context := cgn.callercontext; context != nil {
+		if c, ok := context.Instr().Common().Args[0].(*ssa.Const); ok {
 			name = constant.StringVal(c.Value)
 		}
 	}

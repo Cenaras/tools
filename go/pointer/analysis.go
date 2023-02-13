@@ -347,9 +347,9 @@ func Analyze(config *Config) (result *Result, err error) {
 	// Add dynamic edges to call graph.
 	var space [100]int
 	for _, caller := range a.cgnodes {
-		for _, site := range caller.sites {
-			for _, callee := range a.nodes[site.targets].solve.pts.AppendTo(space[:0]) {
-				a.callEdge(caller, site, nodeid(callee))
+		for _, context := range caller.sites {
+			for _, callee := range a.nodes[context.Targets()].solve.pts.AppendTo(space[:0]) {
+				a.callEdge(caller, context, nodeid(callee))
 			}
 		}
 	}
@@ -359,10 +359,10 @@ func Analyze(config *Config) (result *Result, err error) {
 
 // callEdge is called for each edge in the callgraph.
 // calleeid is the callee's object node (has otFunction flag).
-func (a *analysis) callEdge(caller *cgnode, site *callsite, calleeid nodeid) {
+func (a *analysis) callEdge(caller *cgnode, context context, calleeid nodeid) {
 	obj := a.nodes[calleeid].obj
 	if obj.flags&otFunction == 0 {
-		panic(fmt.Sprintf("callEdge %s -> n%d: not a function object", site, calleeid))
+		panic(fmt.Sprintf("callEdge %s -> n%d: not a function object", context, calleeid))
 	}
 	callee := obj.cgn
 
@@ -371,11 +371,11 @@ func (a *analysis) callEdge(caller *cgnode, site *callsite, calleeid nodeid) {
 		// (to wrappers) to arise due to the elimination of
 		// context information, but I haven't observed any.
 		// Understand this better.
-		callgraph.AddEdge(cg.CreateNode(caller.fn), site.instr, cg.CreateNode(callee.fn))
+		callgraph.AddEdge(cg.CreateNode(caller.fn), context.Instr(), cg.CreateNode(callee.fn))
 	}
 
 	if a.log != nil {
-		fmt.Fprintf(a.log, "\tcall edge %s -> %s\n", site, callee)
+		fmt.Fprintf(a.log, "\tcall edge %s -> %s\n", context, callee)
 	}
 
 	// Warn about calls to functions that are handled unsoundly.
@@ -384,19 +384,19 @@ func (a *analysis) callEdge(caller *cgnode, site *callsite, calleeid nodeid) {
 
 	// Warn about calls to non-intrinsic external functions.
 	if fn.Blocks == nil && a.findIntrinsic(fn) == nil {
-		a.warnf(site.pos(), "unsound call to unknown intrinsic: %s", fn)
+		a.warnf(context.Pos(), "unsound call to unknown intrinsic: %s", fn)
 		a.warnf(fn.Pos(), " (declared here)")
 	}
 
 	// Warn about calls to generic function bodies.
 	if fn.TypeParams().Len() > 0 && len(fn.TypeArgs()) == 0 {
-		a.warnf(site.pos(), "unsound call to generic function body: %s (build with ssa.InstantiateGenerics)", fn)
+		a.warnf(context.Pos(), "unsound call to generic function body: %s (build with ssa.InstantiateGenerics)", fn)
 		a.warnf(fn.Pos(), " (declared here)")
 	}
 
 	// Warn about calls to instantiation wrappers of generics functions.
 	if fn.Origin() != nil && strings.HasPrefix(fn.Synthetic, "instantiation wrapper ") {
-		a.warnf(site.pos(), "unsound call to instantiation wrapper of generic: %s (build with ssa.InstantiateGenerics)", fn)
+		a.warnf(context.Pos(), "unsound call to instantiation wrapper of generic: %s (build with ssa.InstantiateGenerics)", fn)
 		a.warnf(fn.Pos(), " (declared here)")
 	}
 }
