@@ -1666,7 +1666,7 @@ func ext۰reflect۰rtype۰FieldByName(a *analysis, cgn *cgnode) {
 	// and the argument is a string constant,
 	// return only that field.
 	var name string
-	if context := cgn.callercontext; context != nil {
+	if context := cgn.callercontext; !context.IsEmpty() {
 		if c, ok := context.Instr().Common().Args[0].(*ssa.Const); ok {
 			name = constant.StringVal(c.Value)
 		}
@@ -1749,7 +1749,7 @@ func ext۰reflect۰rtype۰InOut(a *analysis, cgn *cgnode, out bool) {
 	// and the argument is an int constant,
 	// return only that parameter.
 	index := -1
-	if context := cgn.callercontext; context != nil {
+	if context := cgn.callercontext; !context.IsEmpty() {
 		if c, ok := context.Instr().Common().Args[0].(*ssa.Const); ok {
 			index = int(c.Int64())
 		}
@@ -1907,7 +1907,7 @@ func ext۰reflect۰rtype۰MethodByName(a *analysis, cgn *cgnode) {
 	// and the argument is a string constant,
 	// return only that method.
 	var name string
-	if context := cgn.callercontext; context != nil {
+	if context := cgn.callercontext; !context.IsEmpty() {
 		if c, ok := context.Instr().Common().Args[0].(*ssa.Const); ok {
 			name = constant.StringVal(c.Value)
 		}

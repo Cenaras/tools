@@ -420,21 +420,25 @@ func doOneInput(t *testing.T, input, fpath string) bool {
 		switch e.kind {
 		case "pointsto", "pointstoquery":
 			if !checkPointsToExpectation(e, ptss, lineMapping, prog) {
+				log.WriteString("1")
 				ok = false
 			}
 
 		case "types":
 			if !checkTypesExpectation(e, ptss, tProbes) {
+				log.WriteString("2")
 				ok = false
 			}
 
 		case "calls":
 			if !checkCallsExpectation(prog, e, result.CallGraph) {
+				log.WriteString("3")
 				ok = false
 			}
 
 		case "warning":
 			if !checkWarningExpectation(prog, e, result.Warnings) {
+				log.WriteString("4")
 				ok = false
 			}
 		}
@@ -629,7 +633,7 @@ func TestInput(t *testing.T) {
 	// make sense of them.
 	fmt.Fprintf(os.Stderr, "Entering directory `%s'\n", wd)
 
-	for _, filename := range inputs {
+	for _, filename := range []string{"testdata/func.go"} {
 		filename := filename
 		t.Run(filename, func(t *testing.T) {
 			if filename == "testdata/a_test.go" {

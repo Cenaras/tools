@@ -64,9 +64,10 @@ type context interface {
 	SetTargets(targets nodeid)
 	Instr() ssa.CallInstruction
 	NewContext(site ssa.CallInstruction) context
-	ShouldUseContext(fn *ssa.Function) bool
+	ShouldUseContext(fn *ssa.Function, a *analysis) bool
 	String() string
 	Pos() token.Pos
+	IsEmpty() bool
 }
 
 type callsiteContext struct {
@@ -86,7 +87,10 @@ func (c *callsiteContext) Instr() ssa.CallInstruction {
 	return c.instr
 }
 
-func (c *callsiteContext) ShouldUseContext(fn *ssa.Function) bool {
+func (c *callsiteContext) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
+	if a.findIntrinsic(fn) != nil {
+		return true // treat intrinsics context-sensitively
+	}
 	if len(fn.Blocks) != 1 {
 		return false // too expensive
 	}
@@ -111,7 +115,10 @@ func (c *callsiteContext) ShouldUseContext(fn *ssa.Function) bool {
 }
 
 func (c *callsiteContext) String() string {
-	return "CallSite Instruction TODO"
+	if c.instr != nil {
+		return c.instr.Common().Description()
+	}
+	return "synthetic function call"
 }
 
 func (c *callsiteContext) Pos() token.Pos {
@@ -127,4 +134,8 @@ func EmptyContext() *callsiteContext {
 
 func (c *callsiteContext) NewContext(site ssa.CallInstruction) context {
 	return &callsiteContext{instr: site}
+}
+
+func (c *callsiteContext) IsEmpty() bool {
+	return c.instr == nil
 }

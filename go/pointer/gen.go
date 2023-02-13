@@ -594,7 +594,7 @@ func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.Call
 	// Ascertain the context (contour/cgnode) for a particular call.
 	var obj nodeid
 
-	if context.ShouldUseContext(fn) {
+	if context.ShouldUseContext(fn, a) {
 		obj = a.makeFunctionObject(fn, context) // new contour
 	} else {
 		obj = a.objectNode(nil, fn) // shared contour
@@ -1164,7 +1164,8 @@ func (a *analysis) genRootCalls() *cgnode {
 		}
 
 		targets := a.addOneNode(main.Signature, "root.targets", nil)
-		newContext := root.callercontext.NewContext(nil)
+		newContext := EmptyContext()
+		newContext.SetTargets(targets)
 		root.sites = append(root.sites, newContext)
 		for _, fn := range [2]*ssa.Function{mainPkg.Func("init"), main} {
 			if a.log != nil {
