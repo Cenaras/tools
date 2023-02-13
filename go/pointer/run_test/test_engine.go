@@ -122,10 +122,10 @@ func run_engine(filename string) {
 		for _, l := range q.PointsTo().Labels() {
 			label := fmt.Sprintf("  %s: %s", prog.Fset.Position(l.Pos()), l)
 			labels = append(labels, label)
-			sort.Strings(labels)
-			for _, label := range labels {
-				fmt.Println(label)
-			}
+		}
+		sort.Strings(labels)
+		for _, label := range labels {
+			fmt.Println(label)
 		}
 		fmt.Println("")
 	}
