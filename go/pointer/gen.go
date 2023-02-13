@@ -594,7 +594,7 @@ func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.Call
 	// Ascertain the context (contour/cgnode) for a particular call.
 	var obj nodeid
 
-	if a.shouldUseContext(fn) {
+	if context.ShouldUseContext(fn) {
 		obj = a.makeFunctionObject(fn, context) // new contour
 	} else {
 		obj = a.objectNode(nil, fn) // shared contour
@@ -798,7 +798,7 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 				a.endObject(obj, nil, v)
 
 			case *ssa.Function:
-				obj = a.makeFunctionObject(v, nil)
+				obj = a.makeFunctionObject(v, EmptyContext())
 
 			case *ssa.Const:
 				// not addressable
