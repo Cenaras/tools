@@ -1,0 +1,67 @@
+//go:build ignore
+// +build ignore
+
+package main
+
+var a, b, c int
+
+var unknown bool // defeat dead-code elimination
+
+func func1() {
+	var h int // @line f1h
+	f := func(x *int) *int {
+		if unknown {
+			return &b
+		}
+		return x
+	}
+
+	// FV(g) = {f, h}
+	g := func(x *int) *int {
+		if unknown {
+			return &h
+		}
+		return f(x)
+	}
+
+	print(g(&a)) // @pointsto command-line-arguments.a | command-line-arguments.b | h@f1h:6
+	print(f(&a)) // @pointsto command-line-arguments.a | command-line-arguments.b
+	print(&a)    // @pointsto command-line-arguments.a
+}
+
+func func2() {
+	var f func(*int) *int
+	if unknown {
+		f = func(x *int) *int {
+			if unknown {
+				return &b
+			}
+			return x
+		}
+	} else {
+		f = func(x *int) *int {
+			return &c
+		}
+	}
+
+	print(f(&a)) // @pointsto command-line-arguments.a | command-line-arguments.b
+}
+
+func foo(bar func(*int) *int) *int {
+	return bar(&b)
+}
+
+func func3() {
+	f := func(x *int) *int {
+		return x
+	}
+
+	print(foo(f))
+	print(f(&a))
+}
+
+func main() {
+	//func1()
+	//func2()
+	func3()
+}

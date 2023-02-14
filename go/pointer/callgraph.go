@@ -128,7 +128,7 @@ func (c *callsiteContext) Pos() token.Pos {
 	return token.NoPos
 }
 
-func EmptyContext2() *callsiteContext {
+func EmptyContext1() *callsiteContext {
 	return &callsiteContext{}
 }
 

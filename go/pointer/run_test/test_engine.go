@@ -51,10 +51,12 @@ func run_engine(filename string) {
 	// Build SSA code for bodies of all functions in the whole program.
 	prog.Build()
 
+	//var log bytes.Buffer
 	// Configure the pointer analysis to build a call-graph.
 	config := &pointer.Config{
 		Mains:          []*ssa.Package{mainPkg},
 		BuildCallGraph: true,
+		Log:            os.Stdout,
 	}
 
 	allfun := ssautil.AllFunctions(prog)
