@@ -149,6 +149,9 @@ func (a *analysis) endObject(obj nodeid, cgn *cgnode, data interface{}) *object 
 // For a context-sensitive contour, callersite identifies the sole
 // callsite; for shared contours, caller is nil.
 func (a *analysis) makeFunctionObject(fn *ssa.Function, context context) nodeid {
+	if obj, ok := a.contextobj[context.HashString(fn)]; ok {
+		return obj
+	}
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\t---- makeFunctionObject %s\n", fn)
 	}
@@ -171,6 +174,7 @@ func (a *analysis) makeFunctionObject(fn *ssa.Function, context context) nodeid 
 
 	// Queue it up for constraint processing.
 	a.genq = append(a.genq, cgn)
+	a.contextobj[context.HashString(fn)] = obj
 
 	return obj
 }

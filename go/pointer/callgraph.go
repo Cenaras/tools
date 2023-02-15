@@ -68,6 +68,7 @@ type context interface {
 	String() string
 	Pos() token.Pos
 	IsEmpty() bool
+	HashString(fn *ssa.Function) string
 }
 
 type callsiteContext struct {
@@ -126,6 +127,10 @@ func (c *callsiteContext) Pos() token.Pos {
 		return c.instr.Pos()
 	}
 	return token.NoPos
+}
+
+func (c *callsiteContext) HashString(fn *ssa.Function) string {
+	return ""
 }
 
 func EmptyContext1() *callsiteContext {

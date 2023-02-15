@@ -127,6 +127,7 @@ type analysis struct {
 	result      *Result                     // results of the analysis
 	track       track                       // pointerlike types whose aliasing we track
 	deltaSpace  []int                       // working space for iterating over PTS deltas
+	contextobj  map[string]nodeid
 
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes
@@ -242,6 +243,7 @@ func Analyze(config *Config) (result *Result, err error) {
 			IndirectQueries: make(map[ssa.Value]Pointer),
 		},
 		deltaSpace: make([]int, 0, 100),
+		contextobj: make(map[string]nodeid),
 	}
 
 	if false {

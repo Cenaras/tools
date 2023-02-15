@@ -58,6 +58,14 @@ func (c *kCallsiteContext) Pos() token.Pos {
 	return token.NoPos
 }
 
+func (c *kCallsiteContext) HashString(fn *ssa.Function) string {
+	str := fn.String()
+	for _, ins := range c.instr {
+		str = str + ins.String()
+	}
+	return str
+}
+
 func EmptyContext() *kCallsiteContext {
 	return &kCallsiteContext{}
 }

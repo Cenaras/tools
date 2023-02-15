@@ -26,7 +26,7 @@ func (s *S) foo() *int {
 
 func context1() {
 	s := &S{&a}
-	t := &T{&b}
+	t := &S{&b}
 	print(bar(s))
 	print(bar(t))
 }
