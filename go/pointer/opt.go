@@ -118,6 +118,11 @@ func (a *analysis) renumber() {
 		a.globalobj[v] = renumbering[id]
 	}
 
+	// Renumber nodeids in global vals.
+	for v, id := range a.globalval {
+		a.globalval[v] = renumbering[id]
+	}
+
 	// Renumber nodeids in constraints.
 	for _, c := range a.constraints {
 		c.renumber(renumbering)

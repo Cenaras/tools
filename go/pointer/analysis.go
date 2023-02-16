@@ -25,14 +25,14 @@ import (
 
 const (
 	// optimization options; enable all when committing
-	optRenumber = false // enable renumbering optimization (makes logs hard to read)
-	optHVN      = true  // enable pointer equivalence via Hash-Value Numbering
+	optRenumber = true // enable renumbering optimization (makes logs hard to read)
+	optHVN      = true // enable pointer equivalence via Hash-Value Numbering
 
 	// debugging options; disable all when committing
 	debugHVN           = false // enable assertions in HVN
 	debugHVNVerbose    = false // enable extra HVN logging
-	debugHVNCrossCheck = true  // run solver with/without HVN and compare (caveats below)
-	debugTimers        = false // show running time of each phase
+	debugHVNCrossCheck = false // run solver with/without HVN and compare (caveats below)
+	debugTimers        = true  // show running time of each phase
 )
 
 // object.flags bitmask values.
