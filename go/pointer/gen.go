@@ -601,7 +601,7 @@ func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.Call
 	if context.ShouldUseContext(fn, a) {
 		obj = a.makeFunctionObject(fn, context) // new contour
 	} else {
-		obj = a.objectNode(nil, fn) // shared contour
+		obj = a.makeFunctionObject(fn, EmptyContext()) // shared contour
 	}
 	a.callEdge(caller, context, obj)
 
@@ -633,23 +633,31 @@ func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.Call
 
 // genDynamicCall generates constraints for a dynamic function call.
 func (a *analysis) genDynamicCall(caller *cgnode, context context, call *ssa.CallCommon, result nodeid) {
-	// pts(targets) will be the set of possible call targets.
-	context.SetTargets(a.valueNode(call.Value))
-
-	// We add dynamic closure rules that store the arguments into
-	// the P-block and load the results from the R-block of each
-	// function discovered in pts(targets).
 
 	sig := call.Signature()
-	var offset uint32 = 1 // P/R block starts at offset 1
-	for i, arg := range call.Args {
+
+	// Allocate a contiguous targets/params/results block for this call.
+	block := a.nextNode()
+	// pts(targets) will be the set of possible call targets
+	context.SetTargets(a.addOneNode(sig, "dynamic.targets", nil))
+	p := a.addNodes(sig.Params(), "dynamic.params")
+	r := a.addNodes(sig.Results(), "dynamic.results")
+
+	// Copy the actual parameters into the call's params block.
+	for i, n := 0, sig.Params().Len(); i < n; i++ {
 		sz := a.sizeof(sig.Params().At(i).Type())
-		a.genStore(caller, call.Value, a.valueNode(arg), offset, sz)
-		offset += sz
+		a.copy(p, a.valueNode(call.Args[i]), sz)
+		p += nodeid(sz)
 	}
+	// Copy the call's results block to the actual results.
 	if result != 0 {
-		a.genLoad(caller, result, call.Value, offset, a.sizeof(sig.Results()))
+		a.copy(result, r, a.sizeof(sig.Results()))
 	}
+
+	// We add a dynamic invoke constraint that will connect the
+	// caller's and the callee's P/R blocks for each discovered
+	// call target.
+	a.addConstraint(&dynamicCallConstraint{sig, a.valueNode(call.Value), block, context})
 }
 
 // genInvoke generates constraints for a dynamic method invocation.
@@ -802,7 +810,9 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 				a.endObject(obj, nil, v)
 
 			case *ssa.Function:
-				obj = a.makeFunctionObject(v, EmptyContext())
+				obj = a.addOneNode(v.Signature, "func proxy node", nil) // (scalar with Signature type)
+				a.endObject(obj, nil, v)
+				a.proxyFuncNodes[obj] = v
 
 			case *ssa.Const:
 				// not addressable
@@ -1175,7 +1185,7 @@ func (a *analysis) genRootCalls() *cgnode {
 			if a.log != nil {
 				fmt.Fprintf(a.log, "\troot call to %s:\n", fn)
 			}
-			a.copy(targets, a.valueNode(fn), 1)
+			a.copy(targets, a.makeFunctionObject(fn, newContext), 1)
 		}
 	}
 
@@ -1354,10 +1364,10 @@ func (a *analysis) generate() {
 	}
 
 	// Discard generation state, to avoid confusion after node renumbering.
-	a.panicNode = 0
-	a.globalval = nil
-	a.localval = nil
-	a.localobj = nil
+	//a.panicNode = 0
+	//a.globalval = nil
+	//a.localval = nil
+	//a.localobj = nil
 
 	stop("Constraint generation")
 }

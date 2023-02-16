@@ -11,6 +11,17 @@ func Test(t *testing.T) {
 	t.Fail()
 }
 
+func TestAll(t *testing.T) {
+	test := []string{"dynamic_sens.go", "myprog.go", "callsite_dup.go", "heap_cloning.go", "invoke_sens.go", "callsite_three_deep.go"}
+	for _, s := range test {
+		s := s
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			run_engine(s)
+		})
+	}
+}
+
 type S struct {
 	i int
 }

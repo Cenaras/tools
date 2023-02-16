@@ -9,7 +9,11 @@ package pointer
 //
 // TODO(adonovan): rename file "renumber.go"
 
-import "fmt"
+import (
+	"fmt"
+
+	"golang.org/x/tools/go/ssa"
+)
 
 // renumber permutes a.nodes so that all nodes within an addressable
 // object appear before all non-addressable nodes, maintaining the
@@ -126,6 +130,13 @@ func (a *analysis) renumber() {
 			site.SetTargets(renumbering[site.Targets()])
 		}
 	}
+
+	// Renumber proxy function nodes
+	newProxyMap := make(map[nodeid]*ssa.Function)
+	for id, v := range a.proxyFuncNodes {
+		newProxyMap[renumbering[id]] = v
+	}
+	a.proxyFuncNodes = newProxyMap
 
 	a.nodes = newNodes
 }

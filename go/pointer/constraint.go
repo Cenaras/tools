@@ -148,3 +148,18 @@ func (c *invokeConstraint) renumber(mapping []nodeid) {
 	c.iface = mapping[c.iface]
 	c.params = mapping[c.params]
 }
+
+// f(params...)
+// A complex constraint attached to funcValue.
+type dynamicCallConstraint struct {
+	signature *types.Signature
+	funcValue nodeid // (ptr) the interface
+	params    nodeid // the start of the identity/params/results block
+	context   context
+}
+
+func (c *dynamicCallConstraint) ptr() nodeid { return c.funcValue }
+func (c *dynamicCallConstraint) renumber(mapping []nodeid) {
+	c.funcValue = mapping[c.funcValue]
+	c.params = mapping[c.params]
+}

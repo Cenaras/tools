@@ -38,6 +38,10 @@ func (c *invokeConstraint) String() string {
 	return fmt.Sprintf("invoke n%d.%s(n%d ...)", c.iface, c.method.Name(), c.params)
 }
 
+func (c *dynamicCallConstraint) String() string {
+	return fmt.Sprintf("dynamicCall n%d(n%d ...)", c.funcValue, c.params)
+}
+
 func (n nodeid) String() string {
 	return fmt.Sprintf("n%d", n)
 }
