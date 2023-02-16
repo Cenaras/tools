@@ -30,7 +30,7 @@ func (a *analysis) solve() {
 	for {
 		// Add new constraints to the graph:
 		// static constraints from SSA on round 1,
-		// dynamic constraints from reflection thereafter.
+		// dynamic constraints from reflection or context sensitve invocations thereafter.
 		a.processNewConstraints()
 
 		var x int
@@ -325,7 +325,8 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 		}
 		sig := fn.Signature
 
-		fnObj := a.globalobj[fn] // dynamic calls use shared contour
+		fnObj := a.makeFunctionObject(fn, c.context) // dynamic calls use shared contour
+		a.generateNewFunctionConstraints()
 		if fnObj == 0 {
 			// a.objectNode(fn) was not called during gen phase.
 			panic(fmt.Sprintf("a.globalobj[%s]==nil", fn))

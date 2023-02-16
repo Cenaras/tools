@@ -682,7 +682,7 @@ func (a *analysis) genInvoke(caller *cgnode, context context, call *ssa.CallComm
 	// We add a dynamic invoke constraint that will connect the
 	// caller's and the callee's P/R blocks for each discovered
 	// call target.
-	a.addConstraint(&invokeConstraint{call.Method, a.valueNode(call.Value), block})
+	a.addConstraint(&invokeConstraint{call.Method, a.valueNode(call.Value), block, context})
 }
 
 // genInvokeReflectType is a specialization of genInvoke where the
@@ -1338,18 +1338,11 @@ func (a *analysis) generate() {
 
 	// Create nodes and constraints for all methods of all types
 	// that are dynamically accessible via reflection or interfaces.
-	for _, T := range a.prog.RuntimeTypes() {
-		a.genMethodsOf(T)
-	}
+	//for _, T := range a.prog.RuntimeTypes() {
+	//	a.genMethodsOf(T)
+	//}
 
-	// Generate constraints for functions as they become reachable
-	// from the roots.  (No constraints are generated for functions
-	// that are dead in this analysis scope.)
-	for len(a.genq) > 0 {
-		cgn := a.genq[0]
-		a.genq = a.genq[1:]
-		a.genFunc(cgn)
-	}
+	a.generateNewFunctionConstraints()
 
 	// The runtime magically allocates os.Args; so should we.
 	if os := a.prog.ImportedPackage("os"); os != nil {
@@ -1367,4 +1360,15 @@ func (a *analysis) generate() {
 	a.localobj = nil
 
 	stop("Constraint generation")
+}
+
+// Generate constraints for functions as they become reachable
+// from the roots.  (No constraints are generated for functions
+// that are dead in this analysis scope.)
+func (a *analysis) generateNewFunctionConstraints() {
+	for len(a.genq) > 0 {
+		cgn := a.genq[0]
+		a.genq = a.genq[1:]
+		a.genFunc(cgn)
+	}
 }

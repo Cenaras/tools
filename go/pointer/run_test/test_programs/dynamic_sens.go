@@ -29,13 +29,11 @@ func func1() {
 	print(&a)    // @pointsto command-line-arguments.a
 }
 
+var f func(*int) *int
+
 func func2() {
-	var f func(*int) *int
 	if unknown {
 		f = func(x *int) *int {
-			if unknown {
-				return &b
-			}
 			return x
 		}
 	} else {
@@ -45,6 +43,7 @@ func func2() {
 	}
 
 	print(f(&a)) // @pointsto command-line-arguments.a | command-line-arguments.b
+	print(f(&b))
 }
 
 func foo(bar func(*int) *int) *int {
@@ -62,6 +61,6 @@ func func3() {
 
 func main() {
 	//func1()
-	//func2()
-	func3()
+	func2()
+	//func3()
 }

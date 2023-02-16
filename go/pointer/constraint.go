@@ -137,9 +137,10 @@ func (c *untagConstraint) renumber(mapping []nodeid) {
 // src.method(params...)
 // A complex constraint attached to iface.
 type invokeConstraint struct {
-	method *types.Func // the abstract method
-	iface  nodeid      // (ptr) the interface
-	params nodeid      // the start of the identity/params/results block
+	method  *types.Func // the abstract method
+	iface   nodeid      // (ptr) the interface
+	params  nodeid      // the start of the identity/params/results block
+	context context
 }
 
 func (c *invokeConstraint) ptr() nodeid { return c.iface }
