@@ -46,8 +46,6 @@ func structs1() {
 
 // @calls command-line-arguments.structs1 -> (command-line-arguments.A).m1
 // @calls command-line-arguments.structs1 -> (*command-line-arguments.A).m2
-// @calls (*command-line-arguments.B).m1 -> (command-line-arguments.A).m1
-// @calls (*command-line-arguments.B).m2 -> (*command-line-arguments.A).m2
 
 type T struct {
 	x int

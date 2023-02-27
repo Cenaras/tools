@@ -269,16 +269,18 @@ func (c *runtimeSetFinalizerConstraint) solve(a *analysis, delta *nodeset) {
 			continue //  not a unary function
 		}
 
+		target := a.addOneNode(tSig, "dynamic.targets", nil)
 		// Extract x to tmp.
 		tx := tSig.Params().At(0).Type()
 		tmp := a.addNodes(tx, "SetFinalizer.tmp")
 		a.typeAssert(tx, tmp, c.x, false)
 
 		// Call f(tmp).
-		a.store(f, tmp, 1, a.sizeof(tx))
+		a.addConstraint(&dynamicCallConstraint{tSig, f, target, EmptyContext()})
+		//a.store(f, tmp, 1, a.sizeof(tx))
 
 		// Add dynamic call target.
-		if a.onlineCopy(c.targets, f) {
+		if a.onlineCopy(c.targets, target) {
 			a.addWork(c.targets)
 		}
 	}

@@ -59,8 +59,25 @@ func func3() {
 	print(f(&a))
 }
 
+type S struct{ x *int }
+
+func (s *S) foo(y *int) *int {
+	return s.x
+}
+
+func func4() {
+	var g func(*int) *int
+	var s1 = &S{&a}
+	//var s2 = &S{&b}
+	g = (*S).foo(s1)
+	print(g(&b))
+	print(g(&c))
+
+}
+
 func main() {
 	//func1()
-	func2()
+	//func2()
 	//func3()
+	func4()
 }

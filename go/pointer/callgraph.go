@@ -130,10 +130,14 @@ func (c *callsiteContext) Pos() token.Pos {
 }
 
 func (c *callsiteContext) HashString(fn *ssa.Function) string {
-	return ""
+	if c.instr != nil {
+		return fn.String() + c.instr.String()
+	} else {
+		return fn.String()
+	}
 }
 
-func EmptyContext1() *callsiteContext {
+func EmptyContext() *callsiteContext {
 	return &callsiteContext{}
 }
 

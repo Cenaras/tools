@@ -335,7 +335,9 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 		// Make callsite's fn variable point to identity of
 		// concrete method.  (There's no need to add it to
 		// worklist since it never has attached constraints.)
-		a.addLabel(c.params, fnObj)
+		if a.addLabel(c.params, fnObj) {
+			a.addWork(c.params)
+		}
 
 		// Extract value and connect to method's receiver.
 		// Copy payload to method's receiver param (arg0).
@@ -379,7 +381,9 @@ func (c *dynamicCallConstraint) solve(a *analysis, delta *nodeset) {
 		// Make callsite's fn variable point to identity of
 		// concrete method.  (There's no need to add it to
 		// worklist since it never has attached constraints.)
-		a.addLabel(c.params, fnObj)
+		if a.addLabel(c.params, fnObj) {
+			a.addWork(c.params)
+		}
 
 		// Extract value and connect to method's receiver.
 		// Copy payload to method's receiver param (arg0).

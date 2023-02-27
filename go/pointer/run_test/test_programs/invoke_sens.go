@@ -8,6 +8,8 @@ package main
 
 var a, b int
 
+var unknown bool
+
 type I interface {
 	foo() *int
 }
@@ -35,6 +37,20 @@ func bar(i I) *int {
 	return i.foo()
 }
 
+func context2() {
+	var s1 *S
+	if unknown {
+		s1 = &S{&a}
+	} else {
+		s1 = &S{&b}
+	}
+	s1.x = &b
+	print(s1.foo())
+	//print(s2.foo())
+}
+
 func main() {
-	context1()
+	//context1()
+	context2()
+
 }

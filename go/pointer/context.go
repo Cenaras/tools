@@ -6,6 +6,15 @@ import (
 	"golang.org/x/tools/go/ssa"
 )
 
+type ContextStrategy interface {
+	Record(obj nodeid, ctx Context) HeapContext
+	Merge(obj nodeid, hctx HeapContext, callsite ssa.CallInstruction, ctx Context) Context
+	MergeStatic(callsite ssa.CallInstruction, ctx Context) Context
+}
+
+type Context interface{}
+type HeapContext interface{}
+
 type kCallsiteContext struct {
 	targets nodeid
 	instr   []ssa.CallInstruction
@@ -66,7 +75,7 @@ func (c *kCallsiteContext) HashString(fn *ssa.Function) string {
 	return str
 }
 
-func EmptyContext() *kCallsiteContext {
+func EmptyContext1() *kCallsiteContext {
 	return &kCallsiteContext{}
 }
 

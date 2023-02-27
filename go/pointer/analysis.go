@@ -25,14 +25,14 @@ import (
 
 const (
 	// optimization options; enable all when committing
-	optRenumber = true // enable renumbering optimization (makes logs hard to read)
-	optHVN      = true // enable pointer equivalence via Hash-Value Numbering
+	optRenumber = false // enable renumbering optimization (makes logs hard to read)
+	optHVN      = false // enable pointer equivalence via Hash-Value Numbering
 
 	// debugging options; disable all when committing
 	debugHVN           = false // enable assertions in HVN
 	debugHVNVerbose    = false // enable extra HVN logging
 	debugHVNCrossCheck = false // run solver with/without HVN and compare (caveats below)
-	debugTimers        = true  // show running time of each phase
+	debugTimers        = false // show running time of each phase
 )
 
 // object.flags bitmask values.
@@ -106,29 +106,30 @@ type node struct {
 
 // An analysis instance holds the state of a single pointer analysis problem.
 type analysis struct {
-	config         *Config                     // the client's control/observer interface
-	prog           *ssa.Program                // the program being analyzed
-	log            io.Writer                   // log stream; nil to disable
-	panicNode      nodeid                      // sink for panic, source for recover
-	nodes          []*node                     // indexed by nodeid
-	flattenMemo    map[types.Type][]*fieldInfo // memoization of flatten()
-	trackTypes     map[types.Type]bool         // memoization of shouldTrack()
-	constraints    []constraint                // set of constraints
-	cgnodes        []*cgnode                   // all cgnodes
-	genq           []*cgnode                   // queue of functions to generate constraints for
-	intrinsics     map[*ssa.Function]intrinsic // non-nil values are summaries for intrinsic fns
-	globalval      map[ssa.Value]nodeid        // node for each global ssa.Value
-	globalobj      map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
-	localval       map[ssa.Value]nodeid        // node for each local ssa.Value
-	localobj       map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
-	atFuncs        map[*ssa.Function]bool      // address-taken functions (for presolver)
-	mapValues      []nodeid                    // values of makemap objects (indirect in HVN)
-	work           nodeset                     // solver's worklist
-	result         *Result                     // results of the analysis
-	track          track                       // pointerlike types whose aliasing we track
-	deltaSpace     []int                       // working space for iterating over PTS deltas
-	contextobj     map[string]nodeid
-	proxyFuncNodes map[nodeid]*ssa.Function
+	config          *Config                     // the client's control/observer interface
+	prog            *ssa.Program                // the program being analyzed
+	log             io.Writer                   // log stream; nil to disable
+	panicNode       nodeid                      // sink for panic, source for recover
+	nodes           []*node                     // indexed by nodeid
+	flattenMemo     map[types.Type][]*fieldInfo // memoization of flatten()
+	trackTypes      map[types.Type]bool         // memoization of shouldTrack()
+	constraints     []constraint                // set of constraints
+	cgnodes         []*cgnode                   // all cgnodes
+	genq            []*cgnode                   // queue of functions to generate constraints for
+	intrinsics      map[*ssa.Function]intrinsic // non-nil values are summaries for intrinsic fns
+	globalval       map[ssa.Value]nodeid        // node for each global ssa.Value
+	globalobj       map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
+	localval        map[ssa.Value]nodeid        // node for each local ssa.Value
+	localobj        map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
+	atFuncs         map[*ssa.Function]bool      // address-taken functions (for presolver)
+	mapValues       []nodeid                    // values of makemap objects (indirect in HVN)
+	work            nodeset                     // solver's worklist
+	result          *Result                     // results of the analysis
+	track           track                       // pointerlike types whose aliasing we track
+	deltaSpace      []int                       // working space for iterating over PTS deltas
+	contextobj      map[string]nodeid
+	proxyFuncNodes  map[nodeid]*ssa.Function
+	contextStrategy ContextStrategy
 
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes

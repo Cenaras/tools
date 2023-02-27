@@ -1185,7 +1185,7 @@ func (a *analysis) genRootCalls() *cgnode {
 			if a.log != nil {
 				fmt.Fprintf(a.log, "\troot call to %s:\n", fn)
 			}
-			a.copy(targets, a.makeFunctionObject(fn, newContext), 1)
+			a.addressOf(fn.Type(), targets, a.makeFunctionObject(fn, newContext))
 		}
 	}
 
