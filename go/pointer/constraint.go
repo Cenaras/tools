@@ -140,6 +140,7 @@ type invokeConstraint struct {
 	method  *types.Func // the abstract method
 	iface   nodeid      // (ptr) the interface
 	params  nodeid      // the start of the identity/params/results block
+	site    *callsite
 	context context
 }
 
@@ -155,6 +156,7 @@ type dynamicCallConstraint struct {
 	signature *types.Signature
 	funcValue nodeid // (ptr) the interface
 	params    nodeid // the start of the identity/params/results block
+	site      *callsite
 	context   context
 }
 

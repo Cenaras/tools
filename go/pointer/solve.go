@@ -325,7 +325,7 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 		}
 		sig := fn.Signature
 
-		fnObj := a.makeFunctionObject(fn, c.context) // dynamic calls use shared contour
+		fnObj := a.makeFunctionObject(fn, c.site, c.context) // dynamic calls use shared contour
 		a.generateNewFunctionConstraints()
 		if fnObj == 0 {
 			// a.objectNode(fn) was not called during gen phase.
@@ -371,7 +371,7 @@ func (c *dynamicCallConstraint) solve(a *analysis, delta *nodeset) {
 		}
 		sig := fn.Signature
 
-		fnObj := a.makeFunctionObject(fn, c.context) // dynamic calls use shared contour
+		fnObj := a.makeFunctionObject(fn, c.site, c.context) // dynamic calls use shared contour
 		a.generateNewFunctionConstraints()
 		if fnObj == 0 {
 			// a.objectNode(fn) was not called during gen phase.

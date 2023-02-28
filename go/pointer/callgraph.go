@@ -14,21 +14,22 @@ import (
 )
 
 type cgnode struct {
-	fn            *ssa.Function
-	obj           nodeid    // start of this contour's object block
-	sites         []context // ordered list of callsites within this function
-	callercontext context   // where called from, if known; nil for shared contours
+	fn         *ssa.Function
+	obj        nodeid      // start of this contour's object block
+	sites      []*callsite // ordered list of callsites within this function
+	callersite *callsite   // where called from, if known; nil for shared contours
+	context    context
 }
 
 // contour returns a description of this node's contour.
 func (n *cgnode) contour() string {
-	if n.callercontext == nil {
+	if n.callersite == nil {
 		return "shared contour"
 	}
-	if true {
-		return fmt.Sprintf("as called from %s", "test")
+	if n.callersite.instr != nil {
+		return fmt.Sprintf("as called from %s", n.callersite.instr.Parent())
 	}
-	return fmt.Sprintf("as called from intrinsic (targets=n%d)", n.callercontext.Targets())
+	return fmt.Sprintf("as called from intrinsic (targets=n%d)", n.callersite.targets)
 }
 
 func (n *cgnode) String() string {
@@ -60,8 +61,6 @@ func (c *callsite) pos() token.Pos {
 }
 
 type context interface {
-	Targets() nodeid
-	SetTargets(targets nodeid)
 	Instr() ssa.CallInstruction
 	NewContext(site ssa.CallInstruction) context
 	ShouldUseContext(fn *ssa.Function, a *analysis) bool

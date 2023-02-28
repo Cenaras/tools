@@ -148,7 +148,7 @@ func (a *analysis) endObject(obj nodeid, cgn *cgnode, data interface{}) *object 
 //
 // For a context-sensitive contour, callersite identifies the sole
 // callsite; for shared contours, caller is nil.
-func (a *analysis) makeFunctionObject(fn *ssa.Function, context context) nodeid {
+func (a *analysis) makeFunctionObject(fn *ssa.Function, callersite *callsite, context context) nodeid {
 	if obj, ok := a.contextobj[context.HashString(fn)]; ok {
 		return obj
 	}
@@ -158,7 +158,7 @@ func (a *analysis) makeFunctionObject(fn *ssa.Function, context context) nodeid 
 
 	// obj is the function object (identity, params, results).
 	obj := a.nextNode()
-	cgn := a.makeCGNode(fn, obj, context)
+	cgn := a.makeCGNode(fn, obj, callersite, context)
 	sig := fn.Signature
 	a.addOneNode(sig, "func.cgnode", nil) // (scalar with Signature type)
 	if recv := sig.Recv(); recv != nil {
@@ -570,16 +570,16 @@ func (a *analysis) shouldUseContext(fn *ssa.Function) bool {
 }
 
 // genStaticCall generates constraints for a statically dispatched function call.
-func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.CallCommon, result nodeid) {
+func (a *analysis) genStaticCall(caller *cgnode, site *callsite, context context, call *ssa.CallCommon, result nodeid) {
 	fn := call.StaticCallee()
 
 	// Special cases for inlined intrinsics.
 	switch fn {
 	case a.runtimeSetFinalizer:
 		// Inline SetFinalizer so the call appears direct.
-		context.SetTargets(a.addOneNode(tInvalid, "SetFinalizer.targets", nil))
+		site.targets = a.addOneNode(tInvalid, "SetFinalizer.targets", nil)
 		a.addConstraint(&runtimeSetFinalizerConstraint{
-			targets: context.Targets(),
+			targets: site.targets,
 			x:       a.valueNode(call.Args[0]),
 			f:       a.valueNode(call.Args[1]),
 		})
@@ -588,7 +588,7 @@ func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.Call
 	case a.reflectValueCall:
 		// Inline (reflect.Value).Call so the call appears direct.
 		dotdotdot := false
-		ret := reflectCallImpl(a, caller, context, a.valueNode(call.Args[0]), a.valueNode(call.Args[1]), dotdotdot)
+		ret := reflectCallImpl(a, caller, site, a.valueNode(call.Args[0]), a.valueNode(call.Args[1]), dotdotdot)
 		if result != 0 {
 			a.addressOf(fn.Signature.Results().At(0).Type(), result, ret)
 		}
@@ -599,11 +599,11 @@ func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.Call
 	var obj nodeid
 
 	if context.ShouldUseContext(fn, a) {
-		obj = a.makeFunctionObject(fn, context) // new contour
+		obj = a.makeFunctionObject(fn, site, context) // new contour
 	} else {
-		obj = a.makeFunctionObject(fn, EmptyContext()) // shared contour
+		obj = a.makeFunctionObject(fn, site, EmptyContext()) // shared contour
 	}
-	a.callEdge(caller, context, obj)
+	a.callEdge(caller, site, obj)
 
 	sig := call.Signature()
 
@@ -632,14 +632,14 @@ func (a *analysis) genStaticCall(caller *cgnode, context context, call *ssa.Call
 }
 
 // genDynamicCall generates constraints for a dynamic function call.
-func (a *analysis) genDynamicCall(caller *cgnode, context context, call *ssa.CallCommon, result nodeid) {
+func (a *analysis) genDynamicCall(caller *cgnode, site *callsite, context context, call *ssa.CallCommon, result nodeid) {
 
 	sig := call.Signature()
 
 	// Allocate a contiguous targets/params/results block for this call.
 	block := a.nextNode()
 	// pts(targets) will be the set of possible call targets
-	context.SetTargets(a.addOneNode(sig, "dynamic.targets", nil))
+	site.targets = a.addOneNode(sig, "dynamic.targets", nil)
 	p := a.addNodes(sig.Params(), "dynamic.params")
 	r := a.addNodes(sig.Results(), "dynamic.results")
 
@@ -657,13 +657,13 @@ func (a *analysis) genDynamicCall(caller *cgnode, context context, call *ssa.Cal
 	// We add a dynamic invoke constraint that will connect the
 	// caller's and the callee's P/R blocks for each discovered
 	// call target.
-	a.addConstraint(&dynamicCallConstraint{sig, a.valueNode(call.Value), block, context})
+	a.addConstraint(&dynamicCallConstraint{sig, a.valueNode(call.Value), block, site, context})
 }
 
 // genInvoke generates constraints for a dynamic method invocation.
-func (a *analysis) genInvoke(caller *cgnode, context context, call *ssa.CallCommon, result nodeid) {
+func (a *analysis) genInvoke(caller *cgnode, site *callsite, context context, call *ssa.CallCommon, result nodeid) {
 	if call.Value.Type() == a.reflectType {
-		a.genInvokeReflectType(caller, context, call, result)
+		a.genInvokeReflectType(caller, site, context, call, result)
 		return
 	}
 
@@ -672,7 +672,7 @@ func (a *analysis) genInvoke(caller *cgnode, context context, call *ssa.CallComm
 	// Allocate a contiguous targets/params/results block for this call.
 	block := a.nextNode()
 	// pts(targets) will be the set of possible call targets
-	context.SetTargets(a.addOneNode(sig, "invoke.targets", nil))
+	site.targets = a.addOneNode(sig, "invoke.targets", nil)
 	p := a.addNodes(sig.Params(), "invoke.params")
 	r := a.addNodes(sig.Results(), "invoke.results")
 
@@ -690,7 +690,7 @@ func (a *analysis) genInvoke(caller *cgnode, context context, call *ssa.CallComm
 	// We add a dynamic invoke constraint that will connect the
 	// caller's and the callee's P/R blocks for each discovered
 	// call target.
-	a.addConstraint(&invokeConstraint{call.Method, a.valueNode(call.Value), block, context})
+	a.addConstraint(&invokeConstraint{call.Method, a.valueNode(call.Value), block, site, context})
 }
 
 // genInvokeReflectType is a specialization of genInvoke where the
@@ -709,7 +709,7 @@ func (a *analysis) genInvoke(caller *cgnode, context context, call *ssa.CallComm
 // as this:
 //
 //	rt.(*reflect.rtype).F()
-func (a *analysis) genInvokeReflectType(caller *cgnode, context context, call *ssa.CallCommon, result nodeid) {
+func (a *analysis) genInvokeReflectType(caller *cgnode, site *callsite, context context, call *ssa.CallCommon, result nodeid) {
 	// Unpack receiver into rtype
 	rtype := a.addOneNode(a.reflectRtypePtr, "rtype.recv", nil)
 	recv := a.valueNode(call.Value)
@@ -718,8 +718,8 @@ func (a *analysis) genInvokeReflectType(caller *cgnode, context context, call *s
 	// Look up the concrete method.
 	fn := a.prog.LookupMethod(a.reflectRtypePtr, call.Method.Pkg(), call.Method.Name())
 
-	obj := a.makeFunctionObject(fn, context) // new contour for this call
-	a.callEdge(caller, context, obj)
+	obj := a.makeFunctionObject(fn, site, context) // new contour for this call
+	a.callEdge(caller, site, obj)
 
 	// From now on, it's essentially a static call, but little is
 	// gained by factoring together the code for both cases.
@@ -762,20 +762,21 @@ func (a *analysis) genCall(caller *cgnode, instr ssa.CallInstruction) {
 		result = a.valueNode(v)
 	}
 
-	var newContext = caller.callercontext.NewContext(instr)
+	site := &callsite{instr: instr}
+	var newContext = caller.context.NewContext(instr)
 	if call.StaticCallee() != nil {
-		a.genStaticCall(caller, newContext, call, result)
+		a.genStaticCall(caller, site, newContext, call, result)
 	} else if call.IsInvoke() {
-		a.genInvoke(caller, newContext, call, result)
+		a.genInvoke(caller, site, newContext, call, result)
 	} else {
-		a.genDynamicCall(caller, newContext, call, result)
+		a.genDynamicCall(caller, site, newContext, call, result)
 	}
 
-	caller.sites = append(caller.sites, newContext)
+	caller.sites = append(caller.sites, site)
 
 	if a.log != nil {
 		// TODO(adonovan): debug: improve log message.
-		fmt.Fprintf(a.log, "\t%s to targets %s from %s\n", newContext, newContext.Targets(), caller)
+		fmt.Fprintf(a.log, "\t%s to targets %s from %s\n", newContext, site.targets, caller)
 	}
 }
 
@@ -1153,8 +1154,8 @@ func (a *analysis) genInstr(cgn *cgnode, instr ssa.Instruction) {
 	}
 }
 
-func (a *analysis) makeCGNode(fn *ssa.Function, obj nodeid, callercontext context) *cgnode {
-	cgn := &cgnode{fn: fn, obj: obj, callercontext: callercontext}
+func (a *analysis) makeCGNode(fn *ssa.Function, obj nodeid, callersite *callsite, callercontext context) *cgnode {
+	cgn := &cgnode{fn: fn, obj: obj, callersite: callersite, context: callercontext}
 	a.cgnodes = append(a.cgnodes, cgn)
 	return cgn
 }
@@ -1164,7 +1165,7 @@ func (a *analysis) makeCGNode(fn *ssa.Function, obj nodeid, callercontext contex
 // or a library.
 func (a *analysis) genRootCalls() *cgnode {
 	r := a.prog.NewFunction("<root>", new(types.Signature), "root of callgraph")
-	root := a.makeCGNode(r, 0, EmptyContext())
+	root := a.makeCGNode(r, 0, nil, EmptyContext())
 
 	// TODO(adonovan): make an ssa utility to construct an actual
 	// root function so we don't need to special-case site-less
@@ -1178,14 +1179,15 @@ func (a *analysis) genRootCalls() *cgnode {
 		}
 
 		targets := a.addOneNode(main.Signature, "root.targets", nil)
+		site := &callsite{targets: targets}
 		newContext := EmptyContext()
 		newContext.SetTargets(targets)
-		root.sites = append(root.sites, newContext)
+		root.sites = append(root.sites, site)
 		for _, fn := range [2]*ssa.Function{mainPkg.Func("init"), main} {
 			if a.log != nil {
 				fmt.Fprintf(a.log, "\troot call to %s:\n", fn)
 			}
-			a.addressOf(fn.Type(), targets, a.makeFunctionObject(fn, newContext))
+			a.addressOf(fn.Type(), targets, a.makeFunctionObject(fn, site, newContext))
 		}
 	}
 
