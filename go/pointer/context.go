@@ -8,12 +8,60 @@ import (
 
 type ContextStrategy interface {
 	Record(obj nodeid, ctx Context) HeapContext
-	Merge(obj nodeid, hctx HeapContext, callsite ssa.CallInstruction, ctx Context) Context
-	MergeStatic(callsite ssa.CallInstruction, ctx Context) Context
+	Merge(obj nodeid, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context
+	MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context
+	EmptyContext() Context
+	EmptyHeapContext() HeapContext
 }
 
-type Context interface{}
-type HeapContext interface{}
+type Context interface {
+	HashString(fn *ssa.Function) string
+}
+type HeapContext interface {
+	HashString() string
+}
+
+type defaultContext struct {
+	instr ssa.CallInstruction
+}
+
+func (c *defaultContext) HashString(fn *ssa.Function) string {
+	if c.instr != nil {
+		return fn.String() + c.instr.String()
+	} else {
+		return fn.String()
+	}
+}
+
+type defaultHeapContext struct {
+}
+
+func (c *defaultHeapContext) HashString() string {
+	return ""
+}
+
+type defaultContextStrategy struct {
+}
+
+func (cs *defaultContextStrategy) EmptyContext() Context {
+	return &defaultContext{}
+}
+
+func (cs *defaultContextStrategy) EmptyHeapContext() HeapContext {
+	return &defaultHeapContext{}
+}
+
+func (cs *defaultContextStrategy) Record(obj nodeid, ctx Context) HeapContext {
+	return cs.EmptyHeapContext()
+}
+
+func (cs *defaultContextStrategy) Merge(obj nodeid, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return cs.EmptyContext()
+}
+
+func (cs *defaultContextStrategy) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &defaultContext{instr: callLabel}
+}
 
 type kCallsiteContext struct {
 	targets nodeid

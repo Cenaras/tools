@@ -141,7 +141,7 @@ type invokeConstraint struct {
 	iface   nodeid      // (ptr) the interface
 	params  nodeid      // the start of the identity/params/results block
 	site    *callsite
-	context context
+	context Context
 }
 
 func (c *invokeConstraint) ptr() nodeid { return c.iface }
@@ -157,7 +157,7 @@ type dynamicCallConstraint struct {
 	funcValue nodeid // (ptr) the interface
 	params    nodeid // the start of the identity/params/results block
 	site      *callsite
-	context   context
+	context   Context
 }
 
 func (c *dynamicCallConstraint) ptr() nodeid { return c.funcValue }

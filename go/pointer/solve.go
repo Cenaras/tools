@@ -325,7 +325,8 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 		}
 		sig := fn.Signature
 
-		fnObj := a.makeFunctionObject(fn, c.site, c.context) // dynamic calls use shared contour
+		newContext := a.contextStrategy.Merge(v, a.contextStrategy.EmptyHeapContext(), c.site.instr, c.context)
+		fnObj := a.makeFunctionObject(fn, c.site, newContext) // dynamic calls use shared contour
 		a.generateNewFunctionConstraints()
 		if fnObj == 0 {
 			// a.objectNode(fn) was not called during gen phase.

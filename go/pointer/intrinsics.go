@@ -276,7 +276,7 @@ func (c *runtimeSetFinalizerConstraint) solve(a *analysis, delta *nodeset) {
 		a.typeAssert(tx, tmp, c.x, false)
 
 		// Call f(tmp).
-		a.addConstraint(&dynamicCallConstraint{tSig, f, target, nil, EmptyContext()})
+		a.addConstraint(&dynamicCallConstraint{tSig, f, target, nil, a.contextStrategy.EmptyContext()})
 		//a.store(f, tmp, 1, a.sizeof(tx))
 
 		// Add dynamic call target.

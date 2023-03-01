@@ -69,6 +69,8 @@ type Config struct {
 	IndirectQueries map[ssa.Value]struct{}
 	extendedQueries map[ssa.Value][]*extendedQuery
 
+	contextStrategy ContextStrategy
+
 	// If Log is non-nil, log messages are written to it.
 	// Logging is extremely verbose.
 	Log io.Writer

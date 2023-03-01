@@ -244,9 +244,14 @@ func Analyze(config *Config) (result *Result, err error) {
 			Queries:         make(map[ssa.Value]Pointer),
 			IndirectQueries: make(map[ssa.Value]Pointer),
 		},
-		deltaSpace:     make([]int, 0, 100),
-		contextobj:     make(map[string]nodeid),
-		proxyFuncNodes: make(map[nodeid]*ssa.Function),
+		deltaSpace:      make([]int, 0, 100),
+		contextobj:      make(map[string]nodeid),
+		proxyFuncNodes:  make(map[nodeid]*ssa.Function),
+		contextStrategy: config.contextStrategy,
+	}
+
+	if a.contextStrategy == nil {
+		a.contextStrategy = &defaultContextStrategy{}
 	}
 
 	if false {
