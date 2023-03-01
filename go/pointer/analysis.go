@@ -128,6 +128,9 @@ type analysis struct {
 	track           track                       // pointerlike types whose aliasing we track
 	deltaSpace      []int                       // working space for iterating over PTS deltas
 	contextobj      map[string]nodeid
+	heapcontextobj  map[string]nodeid
+	heapinfo        map[nodeid]ssa.Value
+	heapinfo2       map[nodeid]HeapContext
 	proxyFuncNodes  map[nodeid]*ssa.Function
 	contextStrategy ContextStrategy
 
@@ -246,6 +249,9 @@ func Analyze(config *Config) (result *Result, err error) {
 		},
 		deltaSpace:      make([]int, 0, 100),
 		contextobj:      make(map[string]nodeid),
+		heapcontextobj:  make(map[string]nodeid),
+		heapinfo:        make(map[nodeid]ssa.Value),
+		heapinfo2:       make(map[nodeid]HeapContext),
 		proxyFuncNodes:  make(map[nodeid]*ssa.Function),
 		contextStrategy: config.contextStrategy,
 	}

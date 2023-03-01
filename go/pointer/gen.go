@@ -149,7 +149,7 @@ func (a *analysis) endObject(obj nodeid, cgn *cgnode, data interface{}) *object 
 // For a context-sensitive contour, callersite identifies the sole
 // callsite; for shared contours, caller is nil.
 func (a *analysis) makeFunctionObject(fn *ssa.Function, callersite *callsite, context Context) nodeid {
-	if obj, ok := a.contextobj[context.HashString(fn)]; ok {
+	if obj, ok := a.contextobj[fn.String()+context.String()]; ok {
 		return obj
 	}
 	if a.log != nil {
@@ -174,7 +174,7 @@ func (a *analysis) makeFunctionObject(fn *ssa.Function, callersite *callsite, co
 
 	// Queue it up for constraint processing.
 	a.genq = append(a.genq, cgn)
-	a.contextobj[context.HashString(fn)] = obj
+	a.contextobj[fn.String()+context.String()] = obj
 
 	return obj
 }
@@ -833,43 +833,54 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 	obj, ok := a.localobj[v]
 	if !ok {
 		switch v := v.(type) {
-		case *ssa.Alloc:
-			obj = a.nextNode()
-			a.addNodes(mustDeref(v.Type()), "alloc")
-			a.endObject(obj, cgn, v)
+		case *ssa.Alloc, *ssa.MakeSlice, *ssa.MakeChan, *ssa.MakeMap, *ssa.MakeInterface:
+			hctx := a.contextStrategy.Record(v, cgn.context)
+			obj, ok = a.heapcontextobj[v.String()+a.prog.Fset.Position(v.Pos()).String()+hctx.String()]
+			if !ok {
+				switch v := v.(type) {
 
-		case *ssa.MakeSlice:
-			obj = a.nextNode()
-			a.addNodes(sliceToArray(v.Type()), "makeslice")
-			a.endObject(obj, cgn, v)
+				case *ssa.Alloc:
+					obj = a.nextNode()
+					a.addNodes(mustDeref(v.Type()), "alloc")
+					a.endObject(obj, cgn, v)
 
-		case *ssa.MakeChan:
-			obj = a.nextNode()
-			a.addNodes(v.Type().Underlying().(*types.Chan).Elem(), "makechan")
-			a.endObject(obj, cgn, v)
+				case *ssa.MakeSlice:
+					obj = a.nextNode()
+					a.addNodes(sliceToArray(v.Type()), "makeslice")
+					a.endObject(obj, cgn, v)
 
-		case *ssa.MakeMap:
-			obj = a.nextNode()
-			tmap := v.Type().Underlying().(*types.Map)
-			a.addNodes(tmap.Key(), "makemap.key")
-			elem := a.addNodes(tmap.Elem(), "makemap.value")
+				case *ssa.MakeChan:
+					obj = a.nextNode()
+					a.addNodes(v.Type().Underlying().(*types.Chan).Elem(), "makechan")
+					a.endObject(obj, cgn, v)
 
-			// To update the value field, MapUpdate
-			// generates store-with-offset constraints which
-			// the presolver can't model, so we must mark
-			// those nodes indirect.
-			for id, end := elem, elem+nodeid(a.sizeof(tmap.Elem())); id < end; id++ {
-				a.mapValues = append(a.mapValues, id)
-			}
-			a.endObject(obj, cgn, v)
+				case *ssa.MakeMap:
+					obj = a.nextNode()
+					tmap := v.Type().Underlying().(*types.Map)
+					a.addNodes(tmap.Key(), "makemap.key")
+					elem := a.addNodes(tmap.Elem(), "makemap.value")
 
-		case *ssa.MakeInterface:
-			tConc := v.X.Type()
-			obj = a.makeTagged(tConc, cgn, v)
+					// To update the value field, MapUpdate
+					// generates store-with-offset constraints which
+					// the presolver can't model, so we must mark
+					// those nodes indirect.
+					for id, end := elem, elem+nodeid(a.sizeof(tmap.Elem())); id < end; id++ {
+						a.mapValues = append(a.mapValues, id)
+					}
+					a.endObject(obj, cgn, v)
 
-			// Copy the value into it, if nontrivial.
-			if x := a.valueNode(v.X); x != 0 {
-				a.copy(obj+1, x, a.sizeof(tConc))
+				case *ssa.MakeInterface:
+					tConc := v.X.Type()
+					obj = a.makeTagged(tConc, cgn, v)
+
+					// Copy the value into it, if nontrivial.
+					if x := a.valueNode(v.X); x != 0 {
+						a.copy(obj+1, x, a.sizeof(tConc))
+					}
+				}
+				a.heapcontextobj[v.String()+a.prog.Fset.Position(v.Pos()).String()+hctx.String()] = obj
+				a.heapinfo[obj] = v
+				a.heapinfo2[obj] = hctx
 			}
 
 		case *ssa.FieldAddr:

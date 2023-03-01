@@ -325,7 +325,9 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 		}
 		sig := fn.Signature
 
-		newContext := a.contextStrategy.Merge(v, a.contextStrategy.EmptyHeapContext(), c.site.instr, c.context)
+		heap := a.heapinfo[v]
+		hctx := a.heapinfo2[v]
+		newContext := a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
 		fnObj := a.makeFunctionObject(fn, c.site, newContext) // dynamic calls use shared contour
 		a.generateNewFunctionConstraints()
 		if fnObj == 0 {
