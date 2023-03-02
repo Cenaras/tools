@@ -106,33 +106,34 @@ type node struct {
 
 // An analysis instance holds the state of a single pointer analysis problem.
 type analysis struct {
-	config          *Config                     // the client's control/observer interface
-	prog            *ssa.Program                // the program being analyzed
-	log             io.Writer                   // log stream; nil to disable
-	panicNode       nodeid                      // sink for panic, source for recover
-	nodes           []*node                     // indexed by nodeid
-	flattenMemo     map[types.Type][]*fieldInfo // memoization of flatten()
-	trackTypes      map[types.Type]bool         // memoization of shouldTrack()
-	constraints     []constraint                // set of constraints
-	cgnodes         []*cgnode                   // all cgnodes
-	genq            []*cgnode                   // queue of functions to generate constraints for
-	intrinsics      map[*ssa.Function]intrinsic // non-nil values are summaries for intrinsic fns
-	globalval       map[ssa.Value]nodeid        // node for each global ssa.Value
-	globalobj       map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
-	localval        map[ssa.Value]nodeid        // node for each local ssa.Value
-	localobj        map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
-	atFuncs         map[*ssa.Function]bool      // address-taken functions (for presolver)
-	mapValues       []nodeid                    // values of makemap objects (indirect in HVN)
-	work            nodeset                     // solver's worklist
-	result          *Result                     // results of the analysis
-	track           track                       // pointerlike types whose aliasing we track
-	deltaSpace      []int                       // working space for iterating over PTS deltas
-	contextobj      map[string]nodeid
-	heapcontextobj  map[string]nodeid
+	config      *Config                     // the client's control/observer interface
+	prog        *ssa.Program                // the program being analyzed
+	log         io.Writer                   // log stream; nil to disable
+	panicNode   nodeid                      // sink for panic, source for recover
+	nodes       []*node                     // indexed by nodeid
+	flattenMemo map[types.Type][]*fieldInfo // memoization of flatten()
+	trackTypes  map[types.Type]bool         // memoization of shouldTrack()
+	constraints []constraint                // set of constraints
+	cgnodes     []*cgnode                   // all cgnodes
+	genq        []*cgnode                   // queue of functions to generate constraints for
+	intrinsics  map[*ssa.Function]intrinsic // non-nil values are summaries for intrinsic fns
+	globalval   map[ssa.Value]nodeid        // node for each global ssa.Value
+	globalobj   map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
+	localval    map[ssa.Value]nodeid        // node for each local ssa.Value
+	localobj    map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
+	atFuncs     map[*ssa.Function]bool      // address-taken functions (for presolver)
+	mapValues   []nodeid                    // values of makemap objects (indirect in HVN)
+	work        nodeset                     // solver's worklist
+	result      *Result                     // results of the analysis
+	track       track                       // pointerlike types whose aliasing we track
+	deltaSpace  []int                       // working space for iterating over PTS deltas
+
+	objFromFunction map[*ssa.Function]map[string]nodeid
+	heapObjFromVal  map[ssa.Value]map[string]nodeid
 	heapinfo        map[nodeid]ssa.Value
 	heapinfo2       map[nodeid]HeapContext
 	proxyFuncNodes  map[nodeid]*ssa.Function
-	contextStrategy ContextStrategy
+	contextStrategy ContextStrategy // The context strategy to use
 
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes
@@ -215,6 +216,10 @@ func (a *analysis) computeTrackBits() {
 	}
 }
 
+type ObjFromContext struct {
+	mapping map[HeapContext]nodeid
+}
+
 // Analyze runs the pointer analysis with the scope and options
 // specified by config, and returns the (synthetic) root of the callgraph.
 //
@@ -248,8 +253,8 @@ func Analyze(config *Config) (result *Result, err error) {
 			IndirectQueries: make(map[ssa.Value]Pointer),
 		},
 		deltaSpace:      make([]int, 0, 100),
-		contextobj:      make(map[string]nodeid),
-		heapcontextobj:  make(map[string]nodeid),
+		objFromFunction: make(map[*ssa.Function]map[string]nodeid),
+		heapObjFromVal:  make(map[ssa.Value]map[string]nodeid),
 		heapinfo:        make(map[nodeid]ssa.Value),
 		heapinfo2:       make(map[nodeid]HeapContext),
 		proxyFuncNodes:  make(map[nodeid]*ssa.Function),
@@ -318,7 +323,6 @@ func Analyze(config *Config) (result *Result, err error) {
 			// optimization, once with, and compare the
 			// solutions.
 			savedConstraints := a.constraints
-			savedContextObj := copyMap(a.contextobj)
 			savedGlobalObj := copyMap(a.globalobj)
 			savedGlobalVal := copyMap(a.globalval)
 			savedProxyFuncNodes := copyMap(a.proxyFuncNodes)
@@ -328,7 +332,6 @@ func Analyze(config *Config) (result *Result, err error) {
 
 			// Restore.
 			a.constraints = savedConstraints
-			a.contextobj = savedContextObj
 			a.globalobj = savedGlobalObj
 			a.globalval = savedGlobalVal
 			a.proxyFuncNodes = savedProxyFuncNodes

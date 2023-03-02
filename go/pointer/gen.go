@@ -149,7 +149,7 @@ func (a *analysis) endObject(obj nodeid, cgn *cgnode, data interface{}) *object 
 // For a context-sensitive contour, callersite identifies the sole
 // callsite; for shared contours, caller is nil.
 func (a *analysis) makeFunctionObject(fn *ssa.Function, callersite *callsite, context Context) nodeid {
-	if obj, ok := a.contextobj[fn.String()+context.String()]; ok {
+	if obj, ok := a.objFromFunction[fn][context.String()]; ok {
 		return obj
 	}
 	if a.log != nil {
@@ -174,7 +174,11 @@ func (a *analysis) makeFunctionObject(fn *ssa.Function, callersite *callsite, co
 
 	// Queue it up for constraint processing.
 	a.genq = append(a.genq, cgn)
-	a.contextobj[fn.String()+context.String()] = obj
+
+	if a.objFromFunction[fn] == nil {
+		a.objFromFunction[fn] = make(map[string]nodeid)
+	}
+	a.objFromFunction[fn][context.String()] = obj
 
 	return obj
 }
@@ -835,7 +839,7 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 		switch v := v.(type) {
 		case *ssa.Alloc, *ssa.MakeSlice, *ssa.MakeChan, *ssa.MakeMap, *ssa.MakeInterface:
 			hctx := a.contextStrategy.Record(v, cgn.context)
-			obj, ok = a.heapcontextobj[v.String()+a.prog.Fset.Position(v.Pos()).String()+hctx.String()]
+			obj, ok = a.heapObjFromVal[v][hctx.String()]
 			if !ok {
 				switch v := v.(type) {
 
@@ -878,7 +882,12 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 						a.copy(obj+1, x, a.sizeof(tConc))
 					}
 				}
-				a.heapcontextobj[v.String()+a.prog.Fset.Position(v.Pos()).String()+hctx.String()] = obj
+
+				if a.heapObjFromVal[v] == nil {
+					a.heapObjFromVal[v] = make(map[string]nodeid)
+				}
+
+				a.heapObjFromVal[v][hctx.String()] = obj
 				a.heapinfo[obj] = v
 				a.heapinfo2[obj] = hctx
 			}

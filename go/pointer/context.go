@@ -2,6 +2,7 @@ package pointer
 
 import (
 	"go/token"
+	"strconv"
 
 	"golang.org/x/tools/go/ssa"
 )
@@ -27,7 +28,7 @@ type defaultContext struct {
 
 func (c *defaultContext) String() string {
 	if c.instr != nil {
-		return c.instr.String()
+		return c.instr.String() + strconv.Itoa(int(c.instr.Pos()))
 	} else {
 		return ""
 	}
