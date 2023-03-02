@@ -258,7 +258,7 @@ func Analyze(config *Config) (result *Result, err error) {
 		heapinfo:        make(map[nodeid]ssa.Value),
 		heapinfo2:       make(map[nodeid]HeapContext),
 		proxyFuncNodes:  make(map[nodeid]*ssa.Function),
-		contextStrategy: config.contextStrategy,
+		contextStrategy: config.ContextStrategy,
 	}
 
 	if a.contextStrategy == nil {

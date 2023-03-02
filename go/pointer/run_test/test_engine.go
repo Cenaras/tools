@@ -18,10 +18,10 @@ import (
 
 func main() {
 	filename := os.Args[2]
-	run_engine(filename)
+	run_engine(filename, nil)
 }
 
-func run_engine(filename string) {
+func run_engine(filename string, contextStrategy pointer.ContextStrategy) {
 
 	var conf loader.Config
 
@@ -54,9 +54,10 @@ func run_engine(filename string) {
 	//var log bytes.Buffer
 	// Configure the pointer analysis to build a call-graph.
 	config := &pointer.Config{
-		Mains:          []*ssa.Package{mainPkg},
-		BuildCallGraph: true,
-		Log:            os.Stdout,
+		Mains:           []*ssa.Package{mainPkg},
+		BuildCallGraph:  true,
+		Log:             os.Stdout,
+		ContextStrategy: contextStrategy,
 	}
 
 	allfun := ssautil.AllFunctions(prog)

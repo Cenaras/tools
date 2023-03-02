@@ -19,8 +19,8 @@ func context1() {
 	var t1, t2 T
 	t1.SetX(&a)
 	t2.SetX(&b)
-	x := t1.Bar()
-	y := t2.Bar()
+	x := t1.GetX()
+	y := t2.GetX()
 	print(x)
 	print(y)
 }

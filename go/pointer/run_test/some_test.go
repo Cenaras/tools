@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"testing"
+
+	"golang.org/x/tools/go/pointer"
 )
 
 func Test(t *testing.T) {
 	// Don't assert @pointsto(t) since its label contains a fragile line number.
-	run_engine("heap_cloning.go")
+	run_engine("heap_cloning.go", &pointer.KCallNHeap{K: 2, N: 2})
 	t.Fail()
 }
 
@@ -17,7 +19,7 @@ func TestAll(t *testing.T) {
 		s := s
 		t.Run(s, func(t *testing.T) {
 			t.Parallel()
-			run_engine(s)
+			run_engine(s, nil)
 		})
 	}
 }

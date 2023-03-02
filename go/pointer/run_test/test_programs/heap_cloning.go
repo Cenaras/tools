@@ -20,6 +20,18 @@ func heap1() {
 	print(t.x)
 }
 
+func foo(x *int) *S {
+	return bar(x)
+}
+
+func heap2() {
+	s := foo(&a)
+	t := foo(&b)
+	print(s.x)
+	print(t.x)
+}
+
 func main() {
-	heap1()
+	//heap1()
+	heap2()
 }
