@@ -5,30 +5,42 @@ package main
 
 var a, b int
 
+type I interface {
+	foo(x *int) *S
+	bar(x *int) *S
+}
+
+type T struct{}
+
 type S struct {
 	x *int
 }
 
-func bar(x *int) *S {
+func (t *T) bar(x *int) *S {
 	return &S{x}
 }
 
 func heap1() {
-	s := bar(&a)
-	t := bar(&b)
-	print(s.x)
-	print(t.x)
+	var t1 I = &T{}
+	var t2 I = &T{}
+	s1 := t1.bar(&a)
+	s2 := t2.bar(&b)
+	print(s1.x)
+	print(s2.x)
 }
 
-func foo(x *int) *S {
-	return bar(x)
+func (t *T) foo(x *int) *S {
+	var k I = &T{}
+	return k.bar(x)
 }
 
 func heap2() {
-	s := foo(&a)
-	t := foo(&b)
-	print(s.x)
-	print(t.x)
+	var t1 I = &T{}
+	var t2 I = &T{}
+	s1 := t1.foo(&a)
+	s2 := t2.foo(&b)
+	print(s1.x)
+	print(s2.x)
 }
 
 func main() {

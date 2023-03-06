@@ -1,6 +1,7 @@
 package pointer
 
 import (
+	"go/token"
 	"strconv"
 
 	"golang.org/x/tools/go/ssa"
@@ -113,4 +114,184 @@ func (cs *KObjNHeap) EmptyContext() Context {
 }
 func (cs *KObjNHeap) EmptyHeapContext() HeapContext {
 	return &KObjNHeapContext{}
+}
+
+// Uniform hybrid context strategies
+type U1Obj struct {
+}
+
+type U1ObjContext struct {
+	heap ssa.Value
+	invo ssa.CallInstruction
+}
+
+func (c *U1ObjContext) String() string {
+	str := ""
+	if c.heap != nil {
+		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
+	}
+	if c.invo != nil {
+		str = str + c.invo.String() + strconv.Itoa(int(c.invo.Pos()))
+	}
+	return str
+}
+
+func (cs *U1Obj) Record(value ssa.Value, ctx Context) HeapContext {
+	return cs.EmptyHeapContext()
+}
+func (cs *U1Obj) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &U1ObjContext{heap: value, invo: callLabel}
+}
+func (cs *U1Obj) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &U1ObjContext{heap: ctx.(*U1ObjContext).heap, invo: callLabel}
+}
+func (cs *U1Obj) EmptyContext() Context {
+	return &U1ObjContext{}
+}
+func (cs *U1Obj) EmptyHeapContext() HeapContext {
+	return &U1ObjContext{}
+}
+
+type U2ObjH struct {
+}
+
+type U2ObjHContext struct {
+	heap  ssa.Value
+	heap2 ssa.Value
+	invo  ssa.CallInstruction
+}
+
+type U2ObjHHeapContext struct {
+	heap ssa.Value
+}
+
+func (c *U2ObjHContext) String() string {
+	str := ""
+	if c.heap != nil {
+		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
+	}
+	if c.heap2 != nil {
+		str = str + c.heap2.String() + strconv.Itoa(int(c.heap2.Pos()))
+	}
+	if c.invo != nil {
+		str = str + c.invo.String() + strconv.Itoa(int(c.invo.Pos()))
+	}
+	return str
+}
+
+func (c *U2ObjHHeapContext) String() string {
+	str := ""
+	if c.heap != nil {
+		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
+	}
+	return str
+}
+
+func (cs *U2ObjH) Record(value ssa.Value, ctx Context) HeapContext {
+	return &U2ObjHHeapContext{heap: ctx.(*U2ObjHContext).heap}
+}
+func (cs *U2ObjH) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &U2ObjHContext{heap: value, heap2: hctx.(*U2ObjHHeapContext).heap, invo: callLabel}
+}
+func (cs *U2ObjH) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &U2ObjHContext{heap: ctx.(*U2ObjHContext).heap, heap2: ctx.(*U2ObjHContext).heap2, invo: callLabel}
+}
+func (cs *U2ObjH) EmptyContext() Context {
+	return &U2ObjHContext{}
+}
+func (cs *U2ObjH) EmptyHeapContext() HeapContext {
+	return &U2ObjHHeapContext{}
+}
+
+// Selective hybrid context strategies
+
+type S1Obj struct {
+}
+
+type S1ObjContext struct {
+	heap ssa.Value
+	invo ssa.CallInstruction
+}
+
+func (c *S1ObjContext) String() string {
+	str := ""
+	if c.heap != nil {
+		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
+	}
+	if c.invo != nil {
+		str = str + c.invo.String() + strconv.Itoa(int(c.invo.Pos()))
+	}
+	return str
+}
+
+func (cs *S1Obj) Record(value ssa.Value, ctx Context) HeapContext {
+	return cs.EmptyHeapContext()
+}
+func (cs *S1Obj) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S1ObjContext{heap: value, invo: nil}
+}
+func (cs *S1Obj) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S1ObjContext{heap: ctx.(*S1ObjContext).heap, invo: callLabel}
+}
+func (cs *S1Obj) EmptyContext() Context {
+	return &S1ObjContext{}
+}
+func (cs *S1Obj) EmptyHeapContext() HeapContext {
+	return &S1ObjContext{}
+}
+
+type ContextArg interface {
+	String() string
+	Pos() token.Pos
+}
+
+type S2ObjH struct {
+}
+
+type S2ObjHContext struct {
+	heap ssa.Value
+	arg2 ContextArg
+	arg3 ContextArg
+}
+
+type S2ObjHHeapContext struct {
+	heap ssa.Value
+}
+
+func (c *S2ObjHContext) String() string {
+	str := ""
+	if c.heap != nil {
+		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
+	}
+	if c.arg2 != nil {
+		str = str + c.arg2.String() + strconv.Itoa(int(c.arg2.Pos()))
+	}
+	if c.arg3 != nil {
+		str = str + c.arg3.String() + strconv.Itoa(int(c.arg3.Pos()))
+	}
+	return str
+}
+
+func (c *S2ObjHHeapContext) String() string {
+	str := ""
+	if c.heap != nil {
+		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
+	}
+	return str
+}
+
+func (cs *S2ObjH) Record(value ssa.Value, ctx Context) HeapContext {
+	return &S2ObjHHeapContext{heap: ctx.(*S2ObjHContext).heap}
+}
+func (cs *S2ObjH) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S2ObjHContext{heap: value, arg2: hctx.(*S2ObjHHeapContext).heap, arg3: nil}
+}
+func (cs *S2ObjH) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S2ObjHContext{heap: ctx.(*S2ObjHContext).heap, arg2: callLabel, arg3: ctx.(*S2ObjHContext).arg2}
+}
+func (cs *S2ObjH) EmptyContext() Context {
+	return &S2ObjHContext{}
+}
+func (cs *S2ObjH) EmptyHeapContext() HeapContext {
+	return &S2ObjHHeapContext{}
 }

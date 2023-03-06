@@ -10,8 +10,13 @@ var a, b int
 
 var unknown bool
 
+func id(x *int) *int {
+	return x
+}
+
 type I interface {
 	foo(x *int) *int
+	baz(x *int) *int
 	bar()
 }
 
@@ -26,16 +31,21 @@ type S struct {
 	y *int
 }
 
-func (s *S) foo(x *int) *int {
-	return x
+func (s S) foo(x *int) *int {
+	return id(x)
 }
 
-func (s *S) bar() {
+func (s S) baz(x *int) *int {
+	var i I = &S{}
+	return i.foo(x)
+}
+
+func (s S) bar() {
 	s.y = s.x
 }
 
 func context1() {
-	var s I = &S{}
+	var s I = S{}
 	print(s.foo(&a))
 	print(s.foo(&b))
 }
@@ -50,11 +60,22 @@ func context2() {
 		s = s2
 	}
 	s.bar()
+	s1.bar()
 	print(s1.y)
 	print(s2.y)
+	print(s.foo(&a))
+	print(s.foo(&b))
+}
+
+func context3() {
+	var s1 I = &S{}
+	var s2 I = &S{}
+	print(s1.baz(&a))
+	print(s2.baz(&b))
 }
 
 func main() {
-	//context1()
-	context2()
+	context1()
+	//context2()
+	//context3()
 }
