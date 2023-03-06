@@ -323,43 +323,47 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 		if fn == nil {
 			panic(fmt.Sprintf("n%d: no ssa.Function for %s", c.iface, c.method))
 		}
-		sig := fn.Signature
+		if a.contextStrategy.TreatStaticInvoke() {
+			a.addConstraint(&staticInvokeConstraint{fn, v, c.params, c.site, c.context})
+		} else {
+			sig := fn.Signature
 
-		heap := a.heapinfo[ifaceObj]
-		hctx := a.heapinfo2[ifaceObj]
-		newContext := a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
-		fnObj := a.makeFunctionObject(fn, c.site, newContext) // dynamic calls use shared contour
-		a.generateNewFunctionConstraints()
-		if fnObj == 0 {
-			// a.objectNode(fn) was not called during gen phase.
-			panic(fmt.Sprintf("a.globalobj[%s]==nil", fn))
+			heap := a.heapinfo[ifaceObj]
+			hctx := a.heapinfo2[ifaceObj]
+			newContext := a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
+			fnObj := a.makeFunctionObject(fn, c.site, newContext) // dynamic calls use shared contour
+			a.generateNewFunctionConstraints()
+			if fnObj == 0 {
+				// a.objectNode(fn) was not called during gen phase.
+				panic(fmt.Sprintf("a.globalobj[%s]==nil", fn))
+			}
+
+			// Make callsite's fn variable point to identity of
+			// concrete method.  (There's no need to add it to
+			// worklist since it never has attached constraints.)
+			if a.addLabel(c.params, fnObj) {
+				a.addWork(c.params)
+			}
+
+			// Extract value and connect to method's receiver.
+			// Copy payload to method's receiver param (arg0).
+			arg0 := a.funcParams(fnObj)
+			recvSize := a.sizeof(sig.Recv().Type())
+			a.onlineCopyN(arg0, v, recvSize)
+
+			src := c.params + 1 // skip past identity
+			dst := arg0 + nodeid(recvSize)
+
+			// Copy caller's argument block to method formal parameters.
+			paramsSize := a.sizeof(sig.Params())
+			a.onlineCopyN(dst, src, paramsSize)
+			src += nodeid(paramsSize)
+			dst += nodeid(paramsSize)
+
+			// Copy method results to caller's result block.
+			resultsSize := a.sizeof(sig.Results())
+			a.onlineCopyN(src, dst, resultsSize)
 		}
-
-		// Make callsite's fn variable point to identity of
-		// concrete method.  (There's no need to add it to
-		// worklist since it never has attached constraints.)
-		if a.addLabel(c.params, fnObj) {
-			a.addWork(c.params)
-		}
-
-		// Extract value and connect to method's receiver.
-		// Copy payload to method's receiver param (arg0).
-		arg0 := a.funcParams(fnObj)
-		recvSize := a.sizeof(sig.Recv().Type())
-		a.onlineCopyN(arg0, v, recvSize)
-
-		src := c.params + 1 // skip past identity
-		dst := arg0 + nodeid(recvSize)
-
-		// Copy caller's argument block to method formal parameters.
-		paramsSize := a.sizeof(sig.Params())
-		a.onlineCopyN(dst, src, paramsSize)
-		src += nodeid(paramsSize)
-		dst += nodeid(paramsSize)
-
-		// Copy method results to caller's result block.
-		resultsSize := a.sizeof(sig.Results())
-		a.onlineCopyN(src, dst, resultsSize)
 	}
 }
 
