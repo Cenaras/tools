@@ -72,3 +72,45 @@ func (cs *KCallNHeap) EmptyContext() Context {
 func (cs *KCallNHeap) EmptyHeapContext() HeapContext {
 	return &KCallNHeapContext{}
 }
+
+type KObjNHeap struct {
+	K int
+	N int
+}
+
+type KObjNHeapContext struct {
+	allocs []ssa.Value
+}
+
+func (c *KObjNHeapContext) String() string {
+	str := ""
+	for _, all := range c.allocs {
+		str = str + all.String() + strconv.Itoa(int(all.Pos()))
+	}
+	return str
+}
+
+func (cs *KObjNHeap) Record(value ssa.Value, ctx Context) HeapContext {
+	allocs := ctx.(*KObjNHeapContext).allocs
+	if len(allocs)-cs.N <= 0 {
+		return ctx
+	} else {
+		return &KObjNHeapContext{allocs: allocs[len(allocs)-cs.N:]}
+	}
+}
+func (cs *KObjNHeap) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	allocs := append(hctx.(*KObjNHeapContext).allocs, value)
+	if len(allocs) > cs.K {
+		allocs = allocs[1:]
+	}
+	return &KObjNHeapContext{allocs: allocs}
+}
+func (cs *KObjNHeap) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return ctx
+}
+func (cs *KObjNHeap) EmptyContext() Context {
+	return &KObjNHeapContext{}
+}
+func (cs *KObjNHeap) EmptyHeapContext() HeapContext {
+	return &KObjNHeapContext{}
+}
