@@ -116,6 +116,10 @@ func (cs *KObjNHeap) EmptyHeapContext() HeapContext {
 	return &KObjNHeapContext{}
 }
 
+func (cs *KObjNHeap) TreatStaticInvoke() bool {
+	return true
+}
+
 // Uniform hybrid context strategies
 type U1Obj struct {
 }

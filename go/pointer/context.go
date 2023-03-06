@@ -12,6 +12,7 @@ type ContextStrategy interface {
 	MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context
 	EmptyContext() Context
 	EmptyHeapContext() HeapContext
+	TreatStaticInvoke() bool
 }
 
 type Context interface {
@@ -61,4 +62,8 @@ func (cs *defaultContextStrategy) Merge(obj ssa.Value, hctx HeapContext, callLab
 
 func (cs *defaultContextStrategy) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
 	return &defaultContext{instr: callLabel}
+}
+
+func (cs *defaultContextStrategy) TreatStaticInvoke() bool {
+	return false
 }

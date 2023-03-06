@@ -407,6 +407,55 @@ func (c *dynamicCallConstraint) solve(a *analysis, delta *nodeset) {
 	}
 }
 
+func (c *staticInvokeConstraint) solve(a *analysis, delta *nodeset) {
+	for _, x := range delta.AppendTo(a.deltaSpace) {
+		v := nodeid(x)
+		sig := c.fn.Signature
+
+		heap := a.heapinfo[v]
+		hctx := a.heapinfo2[v]
+		newContext := a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
+		fnObj := a.makeFunctionObject(c.fn, c.site, newContext) // dynamic calls use shared contour
+		a.generateNewFunctionConstraints()
+		if fnObj == 0 {
+			// a.objectNode(fn) was not called during gen phase.
+			panic(fmt.Sprintf("a.globalobj[%s]==nil", c.fn))
+		}
+
+		// Make callsite's fn variable point to identity of
+		// concrete method.  (There's no need to add it to
+		// worklist since it never has attached constraints.)
+		if a.addLabel(c.params, fnObj) {
+			a.addWork(c.params)
+		}
+
+		// Extract value and connect to method's receiver.
+		// Copy payload to method's receiver param (arg0).
+		arg0 := a.funcParams(fnObj)
+		recvSize := a.sizeof(sig.Recv().Type())
+		for i := 0; i < int(recvSize); i++ {
+			if a.addLabel(arg0, v) {
+				a.addWork(arg0)
+			}
+			arg0 = arg0 + 1
+			v = v + 1
+		}
+
+		src := c.params + 1 // skip past identity
+		dst := arg0
+
+		// Copy caller's argument block to method formal parameters.
+		paramsSize := a.sizeof(sig.Params())
+		a.onlineCopyN(dst, src, paramsSize)
+		src += nodeid(paramsSize)
+		dst += nodeid(paramsSize)
+
+		// Copy method results to caller's result block.
+		resultsSize := a.sizeof(sig.Results())
+		a.onlineCopyN(src, dst, resultsSize)
+	}
+}
+
 func (c *addrConstraint) solve(a *analysis, delta *nodeset) {
 	panic("addr is not a complex constraint")
 }

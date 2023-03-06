@@ -4,7 +4,11 @@
 
 package pointer
 
-import "go/types"
+import (
+	"go/types"
+
+	"golang.org/x/tools/go/ssa"
+)
 
 type constraint interface {
 	// For a complex constraint, returns the nodeid of the pointer
@@ -163,5 +167,21 @@ type dynamicCallConstraint struct {
 func (c *dynamicCallConstraint) ptr() nodeid { return c.funcValue }
 func (c *dynamicCallConstraint) renumber(mapping []nodeid) {
 	c.funcValue = mapping[c.funcValue]
+	c.params = mapping[c.params]
+}
+
+// src.method(params...)
+// A complex constraint attached to iface.
+type staticInvokeConstraint struct {
+	fn      *ssa.Function
+	value   nodeid
+	params  nodeid // the start of the identity/params/results block
+	site    *callsite
+	context Context
+}
+
+func (c *staticInvokeConstraint) ptr() nodeid { return c.value }
+func (c *staticInvokeConstraint) renumber(mapping []nodeid) {
+	c.value = mapping[c.value]
 	c.params = mapping[c.params]
 }

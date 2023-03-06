@@ -31,21 +31,21 @@ type S struct {
 	y *int
 }
 
-func (s S) foo(x *int) *int {
-	return id(x)
+func (s *S) foo(x *int) *int {
+	return x
 }
 
-func (s S) baz(x *int) *int {
+func (s *S) baz(x *int) *int {
 	var i I = &S{}
 	return i.foo(x)
 }
 
-func (s S) bar() {
+func (s *S) bar() {
 	s.y = s.x
 }
 
 func context1() {
-	var s I = S{}
+	var s I = &S{}
 	print(s.foo(&a))
 	print(s.foo(&b))
 }
@@ -60,11 +60,12 @@ func context2() {
 		s = s2
 	}
 	s.bar()
-	s1.bar()
+	//s1.bar()
 	print(s1.y)
 	print(s2.y)
 	print(s.foo(&a))
 	print(s.foo(&b))
+	print(s1.foo(&b))
 }
 
 func context3() {
@@ -75,7 +76,7 @@ func context3() {
 }
 
 func main() {
-	context1()
-	//context2()
+	//context1()
+	context2()
 	//context3()
 }

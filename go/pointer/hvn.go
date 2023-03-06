@@ -466,6 +466,27 @@ func (c *dynamicCallConstraint) presolve(h *hvn) {
 	}
 }
 
+// dst = src.method(c.params...)
+func (c *staticInvokeConstraint) presolve(h *hvn) {
+	// All methods are address-taken functions, so
+	// their formal P-blocks were already marked indirect.
+
+	// Mark the caller's targets node as indirect.
+	sig := c.fn.Type().(*types.Signature)
+	id := c.params
+	h.markIndirect(onodeid(c.params), "invoke targets node")
+	id++
+
+	id += nodeid(h.a.sizeof(sig.Params()))
+
+	// Mark the caller's R-block as indirect.
+	end := id + nodeid(h.a.sizeof(sig.Results()))
+	for id < end {
+		h.markIndirect(onodeid(id), "invoke R-block")
+		id++
+	}
+}
+
 // markIndirectNodes marks as indirect nodes whose points-to relations
 // are not entirely captured by the offline graph, including:
 //
