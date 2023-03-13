@@ -51,7 +51,7 @@ func context1() {
 }
 
 func context2() {
-	var s I
+	var s *S
 	s1 := &S{x: &a}
 	s2 := &S{x: &b}
 	if unknown {
@@ -59,13 +59,17 @@ func context2() {
 	} else {
 		s = s2
 	}
-	s.bar()
+	baz(s)
 	//s1.bar()
 	print(s1.y)
 	print(s2.y)
-	print(s.foo(&a))
-	print(s.foo(&b))
-	print(s1.foo(&b))
+	//print(s.foo(&a))
+	//print(s.foo(&b))
+	//print(s1.foo(&b))
+}
+
+func baz(i I) {
+	i.bar()
 }
 
 func context3() {

@@ -209,15 +209,15 @@ func (cs *U2ObjH) EmptyHeapContext() HeapContext {
 
 // Selective hybrid context strategies
 
-type S1Obj struct {
+type SB1Obj struct {
 }
 
-type S1ObjContext struct {
+type SB1ObjContext struct {
 	heap ssa.Value
 	invo ssa.CallInstruction
 }
 
-func (c *S1ObjContext) String() string {
+func (c *SB1ObjContext) String() string {
 	str := ""
 	if c.heap != nil {
 		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
@@ -228,20 +228,51 @@ func (c *S1ObjContext) String() string {
 	return str
 }
 
-func (cs *S1Obj) Record(value ssa.Value, ctx Context) HeapContext {
+func (cs *SB1Obj) Record(value ssa.Value, ctx Context) HeapContext {
 	return cs.EmptyHeapContext()
 }
-func (cs *S1Obj) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
-	return &S1ObjContext{heap: value, invo: nil}
+func (cs *SB1Obj) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &SB1ObjContext{heap: value, invo: nil}
 }
-func (cs *S1Obj) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
-	return &S1ObjContext{heap: ctx.(*S1ObjContext).heap, invo: callLabel}
+func (cs *SB1Obj) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &SB1ObjContext{heap: ctx.(*SB1ObjContext).heap, invo: callLabel}
 }
-func (cs *S1Obj) EmptyContext() Context {
-	return &S1ObjContext{}
+func (cs *SB1Obj) EmptyContext() Context {
+	return &SB1ObjContext{}
 }
-func (cs *S1Obj) EmptyHeapContext() HeapContext {
-	return &S1ObjContext{}
+func (cs *SB1Obj) EmptyHeapContext() HeapContext {
+	return &SB1ObjContext{}
+}
+
+type SA1Obj struct {
+}
+
+type SA1ObjContext struct {
+	arg ContextArg
+}
+
+func (c *SA1ObjContext) String() string {
+	str := ""
+	if c.arg != nil {
+		str = str + c.arg.String() + strconv.Itoa(int(c.arg.Pos()))
+	}
+	return str
+}
+
+func (cs *SA1Obj) Record(value ssa.Value, ctx Context) HeapContext {
+	return cs.EmptyHeapContext()
+}
+func (cs *SA1Obj) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &SA1ObjContext{arg: value}
+}
+func (cs *SA1Obj) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &SA1ObjContext{arg: callLabel}
+}
+func (cs *SA1Obj) EmptyContext() Context {
+	return &SA1ObjContext{}
+}
+func (cs *SA1Obj) EmptyHeapContext() HeapContext {
+	return &SA1ObjContext{}
 }
 
 type ContextArg interface {

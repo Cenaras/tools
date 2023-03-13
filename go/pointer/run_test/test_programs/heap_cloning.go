@@ -44,6 +44,6 @@ func heap2() {
 }
 
 func main() {
-	//heap1()
-	heap2()
+	heap1()
+	//heap2()
 }
