@@ -90,9 +90,9 @@ func array5() {
 }
 
 func main() {
-	array1()
-	array2()
-	array3()
-	array4()
+	//array1()
+	//array2()
+	//array3()
+	//array4()
 	array5()
 }

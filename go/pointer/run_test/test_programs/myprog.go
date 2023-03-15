@@ -26,5 +26,17 @@ func context1() {
 }
 
 func main() {
-	context1()
+	//context1()
+
+	//var arr [2]*int
+	//array5(&arr)
+}
+
+func array5(arr *[2]*int) {
+	var x int
+	arr[0] = &x
+	arr[1] = &b
+
+	var n int
+	print(arr[n]) // @pointsto command-line-arguments.a | command-line-arguments.b
 }
