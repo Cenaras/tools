@@ -304,6 +304,8 @@ func ext۰runtime۰SetFinalizer(a *analysis, cgn *cgnode) {
 type timeStartTimerConstraint struct {
 	targets nodeid // (indirect)
 	t       nodeid // (ptr)
+	site    *callsite
+	context Context
 }
 
 func (c *timeStartTimerConstraint) ptr() nodeid { return c.t }
@@ -337,13 +339,14 @@ func (c *timeStartTimerConstraint) solve(a *analysis, delta *nodeset) {
 		// }
 		f := t + 4
 		arg := t + 5
-
-		// store t.arg to t.f.params[0]
-		// (offset 1 => skip identity)
-		a.store(f, arg, 1, 1)
+		sig := a.nodes[f].typ.(*types.Signature)
+		block := a.addOneNode(sig, "dynamic.targets", nil)
+		a.addNodes(sig.Params(), "time params")
+		a.onlineCopyN(block+1, arg, a.sizeof(sig.Params()))
+		a.addConstraint(&dynamicCallConstraint{signature: sig, funcValue: f, params: block, site: c.site, context: c.context})
 
 		// Add dynamic call target.
-		if a.onlineCopy(c.targets, f) {
+		if a.onlineCopy(c.targets, block) {
 			a.addWork(c.targets)
 		}
 	}
@@ -354,8 +357,11 @@ func ext۰time۰startTimer(a *analysis, cgn *cgnode) {
 	targets := a.addOneNode(tInvalid, "startTimer.targets", nil)
 	cgn.sites = append(cgn.sites, &callsite{targets: targets})
 	params := a.funcParams(cgn.obj)
+
 	a.addConstraint(&timeStartTimerConstraint{
 		targets: targets,
 		t:       params,
+		site:    cgn.callersite,
+		context: cgn.context,
 	})
 }

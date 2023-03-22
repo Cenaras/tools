@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -16,7 +17,7 @@ func main() {
 	<-timer.C
 
 	// @calls time.startTimer -> time.goFunc
-	// @calls time.goFunc -> main.after
+	// @calls time.goFunc -> command-line-arguments.after
 	timer = time.AfterFunc(time.Second, after)
 	<-timer.C
 }
