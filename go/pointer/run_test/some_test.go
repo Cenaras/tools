@@ -7,7 +7,7 @@ import (
 
 func Test(t *testing.T) {
 	// Don't assert @pointsto(t) since its label contains a fragile line number.
-	run_engine("../../testdata/timer.go", nil)
+	run_engine("../../testdata/arrays.go", nil)
 	t.Fail()
 }
 

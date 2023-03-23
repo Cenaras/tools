@@ -323,8 +323,19 @@ func Analyze(config *Config) (result *Result, err error) {
 			// optimization, once with, and compare the
 			// solutions.
 			savedConstraints := a.constraints
-			savedGlobalObj := copyMap(a.globalobj)
-			savedGlobalVal := copyMap(a.globalval)
+
+			//savedGlobalObj := copyMap(a.globalobj)
+			//savedGlobalVal := copyMap(a.globalval)
+			savedGlobalObj := make(map[ssa.Value]nodeid)
+			for key, value := range a.globalobj {
+				savedGlobalObj[key] = value
+			}
+
+			savedGlobalVal := make(map[ssa.Value]nodeid)
+			for key, value := range a.globalval {
+				savedGlobalVal[key] = value
+			}
+
 			savedProxyFuncNodes := copyMap(a.proxyFuncNodes)
 
 			a.solve()

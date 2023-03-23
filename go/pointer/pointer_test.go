@@ -40,10 +40,10 @@ import (
 var inputs = []string{
 	"testdata/a_test.go",
 	"testdata/another.go",
-	//"testdata/arrayreflect.go",
+	"testdata/arrayreflect.go",
 	"testdata/arrays.go",
 	"testdata/channels.go",
-	//"testdata/chanreflect.go",
+	"testdata/chanreflect.go",
 	"testdata/context.go",
 	"testdata/conv.go",
 	"testdata/extended.go",
@@ -55,15 +55,15 @@ var inputs = []string{
 	"testdata/hello.go", // NB: causes spurious failure of HVN cross-check
 	"testdata/interfaces.go",
 	"testdata/issue9002.go",
-	//"testdata/mapreflect.go",
+	"testdata/mapreflect.go",
 	"testdata/maps.go",
 	"testdata/panic.go",
 	"testdata/recur.go",
-	//"testdata/reflect.go",
+	"testdata/reflect.go",
 	"testdata/rtti.go",
-	//"testdata/structreflect.go",
+	"testdata/structreflect.go",
 	"testdata/structs.go",
-	// "testdata/timer.go", // TODO(adonovan): fix broken assumptions about runtime timers
+	"testdata/timer.go", // TODO(adonovan): fix broken assumptions about runtime timers
 }
 
 var raceEnabled = false
@@ -629,7 +629,7 @@ func TestInput(t *testing.T) {
 	// make sense of them.
 	fmt.Fprintf(os.Stderr, "Entering directory `%s'\n", wd)
 
-	for _, filename := range []string{"testdata/timer.go"} {
+	for _, filename := range inputs {
 		filename := filename
 		t.Run(filename, func(t *testing.T) {
 			if filename == "testdata/a_test.go" {

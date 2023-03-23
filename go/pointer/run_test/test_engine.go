@@ -27,7 +27,6 @@ func run_engine(filename string, contextStrategy pointer.ContextStrategy) {
 
 	// Parse the input file, a string.
 	// (Command-line tools should use conf.FromArgs.)
-	//fmt.Println("hej")
 
 	file, err := conf.ParseFile("test_programs/"+filename, nil)
 	if err != nil {
