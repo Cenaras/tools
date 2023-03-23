@@ -273,6 +273,7 @@ func (c *runtimeSetFinalizerConstraint) solve(a *analysis, delta *nodeset) {
 		// Extract x to tmp.
 		tx := tSig.Params().At(0).Type()
 		tmp := a.addNodes(tx, "SetFinalizer.tmp")
+		a.addNodes(tSig.Results(), "SetFinalizer.results")
 		a.typeAssert(tx, tmp, c.x, false)
 
 		// Call f(tmp).
