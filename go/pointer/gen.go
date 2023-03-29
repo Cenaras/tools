@@ -627,8 +627,13 @@ func (a *analysis) genStaticCall(caller *cgnode, site *callsite, call *ssa.CallC
 		return
 	}
 
-	newContext := a.contextStrategy.MergeStatic(site.instr, caller.context)
-	obj = a.makeFunctionObject(fn, site, newContext) // new contour
+	// If context strategy uses context, create a new. Otherwise use the empty context for this call.
+	if !a.contextStrategy.ShouldUseContext(fn, a) {
+		obj = a.makeFunctionObject(fn, site, a.contextStrategy.EmptyContext())
+	} else {
+		newContext := a.contextStrategy.MergeStatic(site.instr, caller.context)
+		obj = a.makeFunctionObject(fn, site, newContext) // new contour
+	}
 
 	a.callEdge(caller, site, obj)
 
