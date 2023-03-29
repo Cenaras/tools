@@ -48,9 +48,9 @@ func (cs *Insens) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
 /// K call-site with N heap sensitive configuration
 
 type KCallNHeap struct {
-	K                 int
-	N                 int
-	treatStaticInvoke bool
+	K                   int
+	N                   int
+	DoTreatStaticInvoke bool
 }
 
 type KCallNHeapContext struct {
@@ -91,7 +91,7 @@ func (cs *KCallNHeap) EmptyHeapContext() HeapContext {
 }
 
 func (cs *KCallNHeap) TreatStaticInvoke() bool {
-	return cs.treatStaticInvoke
+	return cs.DoTreatStaticInvoke
 }
 
 func (cs *KCallNHeap) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
@@ -101,9 +101,9 @@ func (cs *KCallNHeap) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
 /// K object-sensitvie configuration with N heap context
 
 type KObjNHeap struct {
-	K                 int
-	N                 int
-	treatStaticInvoke bool
+	K                   int
+	N                   int
+	DoTreatStaticInvoke bool
 }
 
 type KObjNHeapContext struct {
@@ -144,7 +144,7 @@ func (cs *KObjNHeap) EmptyHeapContext() HeapContext {
 }
 
 func (cs *KObjNHeap) TreatStaticInvoke() bool {
-	return cs.treatStaticInvoke
+	return cs.DoTreatStaticInvoke
 }
 
 func (cs *KObjNHeap) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
@@ -154,7 +154,7 @@ func (cs *KObjNHeap) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
 /// 1-Uniform hybrid context strategy
 
 type U1Obj struct {
-	treatStaticInvoke bool
+	DoTreatStaticInvoke bool
 }
 
 type U1ObjContext struct {
@@ -190,7 +190,7 @@ func (cs *U1Obj) EmptyHeapContext() HeapContext {
 }
 
 func (cs *U1Obj) TreatStaticInvoke() bool {
-	return cs.treatStaticInvoke
+	return cs.DoTreatStaticInvoke
 }
 
 func (cs *U1Obj) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
@@ -200,7 +200,7 @@ func (cs *U1Obj) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
 /// 2-Uniform hybrid sensitive with sensitive heap.
 
 type U2ObjH struct {
-	treatStaticInvoke bool
+	DoTreatStaticInvoke bool
 }
 
 type U2ObjHContext struct {
@@ -252,7 +252,7 @@ func (cs *U2ObjH) EmptyHeapContext() HeapContext {
 }
 
 func (cs *U2ObjH) TreatStaticInvoke() bool {
-	return cs.treatStaticInvoke
+	return cs.DoTreatStaticInvoke
 }
 
 func (cs *U2ObjH) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
@@ -263,7 +263,7 @@ func (cs *U2ObjH) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
 
 // Configuration B
 type SB1Obj struct {
-	treatStaticInvoke bool
+	DoTreatStaticInvoke bool
 }
 
 type SB1ObjContext struct {
@@ -299,7 +299,7 @@ func (cs *SB1Obj) EmptyHeapContext() HeapContext {
 }
 
 func (cs *SB1Obj) TreatStaticInvoke() bool {
-	return cs.treatStaticInvoke
+	return cs.DoTreatStaticInvoke
 }
 
 func (cs *SB1Obj) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
@@ -308,7 +308,7 @@ func (cs *SB1Obj) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
 
 // Configuration A
 type SA1Obj struct {
-	treatStaticInvoke bool
+	DoTreatStaticInvoke bool
 }
 
 type SA1ObjContext struct {
@@ -340,7 +340,7 @@ func (cs *SA1Obj) EmptyHeapContext() HeapContext {
 }
 
 func (cs *SA1Obj) TreatStaticInvoke() bool {
-	return cs.treatStaticInvoke
+	return cs.DoTreatStaticInvoke
 }
 
 func (cs *SA1Obj) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
@@ -355,7 +355,7 @@ type ContextArg interface {
 /// Selective object sensitive with heap sensitivity
 
 type S2ObjH struct {
-	treatStaticInvoke bool
+	DoTreatStaticInvoke bool
 }
 
 type S2ObjHContext struct {
@@ -407,7 +407,7 @@ func (cs *S2ObjH) EmptyHeapContext() HeapContext {
 }
 
 func (cs *S2ObjH) TreatStaticInvoke() bool {
-	return cs.treatStaticInvoke
+	return cs.DoTreatStaticInvoke
 }
 
 func (cs *S2ObjH) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
