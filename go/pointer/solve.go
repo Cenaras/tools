@@ -330,7 +330,16 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 
 			heap := a.heapinfo[ifaceObj]
 			hctx := a.heapinfo2[ifaceObj]
-			newContext := a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
+
+			var newContext Context
+
+			// If no allocation site is present, use previous.
+			if heap == nil {
+				newContext = c.context
+			} else {
+				newContext = a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
+			}
+
 			fnObj := a.makeFunctionObject(fn, c.site, newContext) // dynamic calls use shared contour
 			a.generateNewFunctionConstraints()
 			if fnObj == 0 {
@@ -418,7 +427,16 @@ func (c *staticInvokeConstraint) solve(a *analysis, delta *nodeset) {
 
 		heap := a.heapinfo[v]
 		hctx := a.heapinfo2[v]
-		newContext := a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
+
+		var newContext Context
+
+		// If no allocation site is present, use previous.
+		if heap == nil {
+			newContext = c.context
+		} else {
+			newContext = a.contextStrategy.Merge(heap, hctx, c.site.instr, c.context)
+		}
+
 		fnObj := a.makeFunctionObject(c.fn, c.site, newContext) // dynamic calls use shared contour
 		a.generateNewFunctionConstraints()
 		if fnObj == 0 {
