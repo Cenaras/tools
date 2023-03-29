@@ -1,3 +1,6 @@
+// This file contains implementations of several of the context strategies presented in
+// https://yanniss.github.io/hybrid-context-pldi13.pdf
+
 package pointer
 
 import (
