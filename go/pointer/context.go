@@ -23,11 +23,11 @@ type HeapContext interface {
 	String() string
 }
 
-type defaultContext struct {
+type DefaultContext struct {
 	instr ssa.CallInstruction
 }
 
-func (c *defaultContext) String() string {
+func (c *DefaultContext) String() string {
 	if c.instr != nil {
 		return c.instr.String() + strconv.Itoa(int(c.instr.Pos()))
 	} else {
@@ -46,7 +46,7 @@ type defaultContextStrategy struct {
 }
 
 func (cs *defaultContextStrategy) EmptyContext() Context {
-	return &defaultContext{}
+	return &DefaultContext{}
 }
 
 func (cs *defaultContextStrategy) EmptyHeapContext() HeapContext {
@@ -62,7 +62,7 @@ func (cs *defaultContextStrategy) Merge(obj ssa.Value, hctx HeapContext, callLab
 }
 
 func (cs *defaultContextStrategy) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
-	return &defaultContext{instr: callLabel}
+	return &DefaultContext{instr: callLabel}
 }
 
 func (cs *defaultContextStrategy) TreatStaticInvoke() bool {
