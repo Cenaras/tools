@@ -3,29 +3,27 @@
 
 package main
 
-type S struct{ x int }
+type S struct{ x *int }
 
-var c S
+var a, b int
+
+var c, d *int
 
 func cycles1() {
-	a := &c
-	d := c
-	b := *a
-	*a = b
+	c = &a
+	d = &b
+	var e = &d
+	*e = c
+	c = *e
 
-	print(a.x)
-	print(b)
-	print(c.x)
-	print(d)
+	print(c)
 }
 
 func cycles2() {
-	x := S{2}
-	y := S{3}
-	x, y = y, x
+
 }
 
 func main() {
-	//cycles1()
-	cycles2()
+	cycles1()
+	//cycles2()
 }

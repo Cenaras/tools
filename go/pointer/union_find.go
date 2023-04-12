@@ -43,11 +43,13 @@ func unify(a *analysis, inCycles []nodeid, r map[nodeid]nodeid) {
 			ysolve := a.nodes[v].solve
 			y := ysolve.find()
 
-			if x.pts.UnionWith(&y.pts.Sparse) {
+			if x.pts.addAll(&y.pts) {
 				a.addWork(x.id)
 			}
+			x.copyTo.addAll(&y.copyTo)
+			x.checkedLazy.addAll(&y.checkedLazy)
 			x.complex = append(x.complex, y.complex...) // TODO: Dedupe
-			if len(y.complex) != 0 && !x.prevPTS.IsEmpty() {
+			if !x.prevPTS.IsEmpty() {
 				stale.add(x.id)
 			}
 			xsolve.union(ysolve)
@@ -56,6 +58,6 @@ func unify(a *analysis, inCycles []nodeid, r map[nodeid]nodeid) {
 	var deltaSpace []int
 	for _, id := range stale.AppendTo(deltaSpace) {
 		n := a.nodes[id]
-		a.solveConstraints(n, &n.solve.find().prevPTS)
+		a.solveConstraints(n, &n.solve.find().prevPTS, false)
 	}
 }

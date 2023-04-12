@@ -13,11 +13,12 @@ import (
 )
 
 type solverState struct {
-	id      nodeid       // nodeid of the attached node
-	complex []constraint // complex constraints attached to this node
-	copyTo  nodeset      // simple copy constraint edges
-	pts     nodeset      // points-to set of this node
-	prevPTS nodeset      // pts(n) in previous iteration (for difference propagation)
+	id          nodeid       // nodeid of the attached node
+	complex     []constraint // complex constraints attached to this node
+	copyTo      nodeset      // simple copy constraint edges
+	pts         nodeset      // points-to set of this node
+	prevPTS     nodeset      // pts(n) in previous iteration (for difference propagation)
+	checkedLazy nodeset      // nodes already checked for lazy cycles
 }
 
 func (a *analysis) solve() {
@@ -58,35 +59,11 @@ func (a *analysis) solve() {
 		solve.prevPTS.Copy(&solve.pts.Sparse)
 
 		// Apply all resolution rules attached to n.
-		a.solveConstraints(n, &delta)
+		a.solveConstraints(n, &delta, true)
 
 		if a.log != nil {
 			fmt.Fprintf(a.log, "\t\tpts(n%d) = %s\n", id, &n.solve.find().pts)
 		}
-
-		// Lazy Cycle Detection here?
-		// For each copy edge, if src and dst have same pts and are not processed yet,
-		// we have a potential cycle
-
-		// As TakeMin removes copy edges we create a new copy here.
-		var copyEdges nodeset
-		copyEdges.Copy(&solve.copyTo.Sparse)
-		// Iterate over all outgoing edges for the node - try to detect cycle
-		for {
-			fmt.Fprintf(a.log, "\t\tOutgoing edges: %s\n", &copyEdges)
-			var y int
-			if !copyEdges.TakeMin(&y) {
-				break // No more copy edges
-			}
-
-			z := a.nodes[nodeid(y)].solve.find()
-			if solve.pts.Equals(&z.pts.Sparse) {
-				fmt.Fprintf(a.log, "\t\tDETECT AND COLLAPSE CYCLES(%d)\n", z.id)
-				// Set of seen edges updated here.
-			}
-
-		}
-
 	}
 
 	if !a.nodes[0].solve.find().pts.IsEmpty() {
@@ -171,14 +148,14 @@ func (a *analysis) processNewConstraints() {
 	var space [50]int
 	for _, id := range stale.AppendTo(space[:0]) {
 		n := a.nodes[nodeid(id)]
-		a.solveConstraints(n, &n.solve.find().prevPTS)
+		a.solveConstraints(n, &n.solve.find().prevPTS, false)
 	}
 }
 
 // solveConstraints applies each resolution rule attached to node n to
 // the set of labels delta.  It may generate new constraints in
 // a.constraints.
-func (a *analysis) solveConstraints(n *node, delta *nodeset) {
+func (a *analysis) solveConstraints(n *node, delta *nodeset, detectCycles bool) {
 	if delta.IsEmpty() {
 		return
 	}
@@ -193,11 +170,21 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset) {
 
 	// Process copy constraints.
 	var copySeen nodeset
-	for _, x := range n.solve.find().copyTo.AppendTo(a.deltaSpace) {
-		mid := nodeid(x)
-		if copySeen.add(mid) {
-			if a.nodes[mid].solve.find().pts.addAll(delta) {
-				a.addWork(mid)
+	solve := n.solve.find()
+	for _, x := range solve.copyTo.AppendTo(a.deltaSpace) {
+		m := a.nodes[nodeid(x)].solve.find()
+		if copySeen.add(m.id) && m.id != solve.id {
+			if detectCycles && solve.pts.Equals(&m.pts.Sparse) && !solve.checkedLazy.Has(int(m.id)) {
+				if a.log != nil {
+					fmt.Fprintf(a.log, "\t\tDETECT AND COLLAPSE CYCLES %d -> %d\n", solve.id, m.id)
+				}
+				nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
+				nuu.visit(m.id)
+				unify(a, nuu.InCycles, nuu.R)
+				solve.checkedLazy.add(m.id)
+			}
+			if a.nodes[m.id].solve.find().pts.addAll(delta) {
+				a.addWork(m.id)
 			}
 		}
 	}
