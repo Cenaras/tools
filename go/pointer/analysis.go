@@ -100,8 +100,8 @@ type node struct {
 
 	// Solver state for the canonical node of this pointer-
 	// equivalence class.  Each node is created with its own state
-	// but they become shared after HVN.
-	solve *solverState
+	// but they become shared after HVN. - OLD COMMENTS
+	solve *UFNode
 }
 
 // An analysis instance holds the state of a single pointer analysis problem.
@@ -346,8 +346,8 @@ func Analyze(config *Config) (result *Result, err error) {
 			a.globalobj = savedGlobalObj
 			a.globalval = savedGlobalVal
 			a.proxyFuncNodes = savedProxyFuncNodes
-			for _, n := range a.nodes {
-				n.solve = new(solverState)
+			for id, n := range a.nodes {
+				n.solve = &UFNode{solverState: &solverState{id: nodeid(id)}, parent: nil}
 			}
 			a.nodes = a.nodes[:N]
 
@@ -386,7 +386,7 @@ func Analyze(config *Config) (result *Result, err error) {
 	var space [100]int
 	for _, caller := range a.cgnodes {
 		for _, site := range caller.sites {
-			for _, callee := range a.nodes[site.targets].solve.pts.AppendTo(space[:0]) {
+			for _, callee := range a.nodes[site.targets].solve.find().pts.AppendTo(space[:0]) {
 				a.callEdge(caller, site, nodeid(callee))
 			}
 		}
@@ -462,7 +462,7 @@ func (a *analysis) dumpSolution(filename string, N int) {
 			panic(err)
 		}
 		var sep string
-		for _, l := range n.solve.pts.AppendTo(a.deltaSpace) {
+		for _, l := range n.solve.find().pts.AppendTo(a.deltaSpace) {
 			if l >= N {
 				break
 			}
@@ -501,7 +501,7 @@ func (a *analysis) showCounts() {
 		// Show number of pointer equivalence classes.
 		m := make(map[*solverState]bool)
 		for _, n := range a.nodes {
-			m[n.solve] = true
+			m[n.solve.find()] = true
 		}
 		fmt.Fprintf(a.log, "# ptsets:\t%d\n", len(m))
 	}

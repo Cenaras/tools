@@ -80,7 +80,7 @@ func context3() {
 }
 
 func main() {
-	//context1()
+	context1()
 	context2()
-	//context3()
+	context3()
 }

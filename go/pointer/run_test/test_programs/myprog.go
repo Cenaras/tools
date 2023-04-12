@@ -25,7 +25,17 @@ func context1() {
 	print(y)
 }
 
+func simple() {
+	i := 0
+	j := 1
+	myStruct := T{x: &i}
+	print(myStruct)
+	myStruct = T{x: &j}
+	print(myStruct)
+}
+
 func main() {
+	simple()
 	//context1()
 
 	//var arr [2]*int
