@@ -5,7 +5,6 @@ package pointer
 type UFNode struct {
 	solverState *solverState // Solver state of the underlying node represented.
 	parent      *UFNode      // The representative of this node - nil if root
-	rank        int          // The rank of the node
 }
 
 func (uFNode *UFNode) find() *solverState {
@@ -22,6 +21,7 @@ func (ufNode *UFNode) findParent() *UFNode {
 	return ufNode
 }
 
+// ufNode becomes the parent of other
 func (ufNode *UFNode) union(other *UFNode) {
 	x := ufNode.findParent()
 	y := other.findParent()
@@ -30,24 +30,32 @@ func (ufNode *UFNode) union(other *UFNode) {
 		return
 	}
 
-	// Set the root of this subset to be node with lowest rank.
-	if x.rank < y.rank {
-		x, y = y, x
-	}
-
 	y.parent = x
-	if x.rank == y.rank {
-		x.rank += 1
-	}
 }
 
 // Do a bunched unify instead of a set of nodes to unify rather than this.
-func (ufNode *UFNode) unify(other *UFNode) {
-	x := ufNode.find()
-	y := other.find()
+func unify(a *analysis, inCycles []nodeid, r map[nodeid]nodeid) {
+	var stale nodeset
+	for _, v := range inCycles {
+		if v != r[v] {
+			xsolve := a.nodes[r[v]].solve
+			x := xsolve.find()
+			ysolve := a.nodes[v].solve
+			y := ysolve.find()
 
-	x.pts.UnionWith(&y.pts.Sparse)
-	x.complex = append(x.complex, y.complex...) // TODO: Dedupe
-	//if y.complex != nil && !x.prevPTS.IsEmpty()
-
+			if x.pts.UnionWith(&y.pts.Sparse) {
+				a.addWork(x.id)
+			}
+			x.complex = append(x.complex, y.complex...) // TODO: Dedupe
+			if len(y.complex) != 0 && !x.prevPTS.IsEmpty() {
+				stale.add(x.id)
+			}
+			xsolve.union(ysolve)
+		}
+	}
+	var deltaSpace []int
+	for _, id := range stale.AppendTo(deltaSpace) {
+		n := a.nodes[id]
+		a.solveConstraints(n, &n.solve.find().prevPTS)
+	}
 }
