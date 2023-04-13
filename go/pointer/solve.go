@@ -183,7 +183,7 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset, detectCycles bool) 
 				}
 				nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
 				nuu.visit(m.id)
-				unify(a, nuu.InCycles, nuu.R)
+				unify(a, &nuu.InCycles, nuu.R)
 				solve.checkedLazy.add(m.id)
 			}
 			if a.nodes[m.id].solve.find().pts.addAll(delta) {

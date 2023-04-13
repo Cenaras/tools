@@ -442,7 +442,7 @@ func doOneInput(t *testing.T, input, fpath string) bool {
 
 	complete = true
 
-	//ok = false // debugging: uncomment to always see log
+	ok = false // debugging: uncomment to always see log
 
 	return ok
 }

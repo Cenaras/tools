@@ -36,9 +36,11 @@ func (ufNode *UFNode) union(other *UFNode) {
 }
 
 // Do a bunched unify instead of a set of nodes to unify rather than this.
-func unify(a *analysis, inCycles []nodeid, r map[nodeid]nodeid) {
+func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 	var stale nodeset
-	for _, v := range inCycles {
+	var deltaSpace []int
+	for _, id := range inCycles.AppendTo(deltaSpace) {
+		v := nodeid(id)
 		if v != r[v] {
 			xsolve := a.nodes[r[v]].solve
 			x := xsolve.find()
@@ -57,8 +59,8 @@ func unify(a *analysis, inCycles []nodeid, r map[nodeid]nodeid) {
 			xsolve.union(ysolve)
 		}
 	}
-	var deltaSpace []int
-	for _, id := range stale.AppendTo(deltaSpace) {
+	var deltaSpace2 []int
+	for _, id := range stale.AppendTo(deltaSpace2) {
 		n := a.nodes[id]
 		a.solveConstraints(n, &n.solve.find().prevPTS, false)
 	}
