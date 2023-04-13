@@ -1,5 +1,7 @@
 package pointer
 
+import "fmt"
+
 // Define functions on Graph, give arguments to methods
 
 type UFNode struct {
@@ -31,30 +33,38 @@ func (ufNode *UFNode) union(other *UFNode) {
 	}
 
 	y.parent = x
+	// No need to keep old solverstate
+	y.solverState = nil
 }
 
 // Do a bunched unify instead of a set of nodes to unify rather than this.
-func unify(a *analysis, inCycles []nodeid, r map[nodeid]nodeid) {
+func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 	var stale nodeset
-	for _, v := range inCycles {
+	var deltaSpace []int
+	for _, id := range inCycles.AppendTo(deltaSpace) {
+		v := nodeid(id)
 		if v != r[v] {
 			xsolve := a.nodes[r[v]].solve
 			x := xsolve.find()
 			ysolve := a.nodes[v].solve
 			y := ysolve.find()
+			if a.log != nil {
+				fmt.Fprintf(a.log, "Unifying %d into %d\n", y.id, x.id)
+			}
 
-			if x.pts.UnionWith(&y.pts.Sparse) {
+			if x.pts.addAll(&y.pts) {
 				a.addWork(x.id)
 			}
+			x.copyTo.addAll(&y.copyTo)
 			x.complex = append(x.complex, y.complex...) // TODO: Dedupe
-			if len(y.complex) != 0 && !x.prevPTS.IsEmpty() {
+			if !x.prevPTS.IsEmpty() {
 				stale.add(x.id)
 			}
 			xsolve.union(ysolve)
 		}
 	}
-	var deltaSpace []int
-	for _, id := range stale.AppendTo(deltaSpace) {
+	var deltaSpace2 []int
+	for _, id := range stale.AppendTo(deltaSpace2) {
 		n := a.nodes[id]
 		a.solveConstraints(n, &n.solve.find().prevPTS)
 	}
