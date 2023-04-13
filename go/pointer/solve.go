@@ -41,7 +41,7 @@ func (a *analysis) solve() {
 		}
 		id := nodeid(x)
 		if a.nodes[id].solve.find().id != id {
-			break // A collapsed node
+			continue // A collapsed node
 		}
 		if a.log != nil {
 			fmt.Fprintf(a.log, "\tnode n%d\n", id)

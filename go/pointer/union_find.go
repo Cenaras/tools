@@ -1,5 +1,7 @@
 package pointer
 
+import "fmt"
+
 // Define functions on Graph, give arguments to methods
 
 type UFNode struct {
@@ -46,6 +48,9 @@ func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 			x := xsolve.find()
 			ysolve := a.nodes[v].solve
 			y := ysolve.find()
+			if a.log != nil {
+				fmt.Fprintf(a.log, "Unifying %d into %d\n", y.id, x.id)
+			}
 
 			if x.pts.addAll(&y.pts) {
 				a.addWork(x.id)
