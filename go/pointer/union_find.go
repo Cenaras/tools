@@ -31,6 +31,8 @@ func (ufNode *UFNode) union(other *UFNode) {
 	}
 
 	y.parent = x
+	// No need to keep old solverstate
+	y.solverState = nil
 }
 
 // Do a bunched unify instead of a set of nodes to unify rather than this.
