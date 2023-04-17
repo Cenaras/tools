@@ -8,7 +8,15 @@ type nuutila struct {
 	C        nodeset
 	S        []nodeid
 	T        []nodeid
-	InCycles []nodeid
+	InCycles nodeset
+}
+
+func (nuu *nuutila) visitAll() {
+	for x, n := range nuu.a.nodes {
+		if id := nodeid(x); n.solve.find().id == id && nuu.D[id] == 0 {
+			nuu.visit(id)
+		}
+	}
 }
 
 func (nuu *nuutila) visit(v nodeid) {
@@ -24,7 +32,7 @@ func (nuu *nuutila) visit(v nodeid) {
 		if !nuu.C.Has(int(w)) {
 			if nuu.D[nuu.R[v]] >= nuu.D[nuu.R[w]] {
 				nuu.R[v] = nuu.R[w]
-				nuu.InCycles = append(nuu.InCycles, v)
+				nuu.InCycles.add(v)
 			}
 		}
 	}
@@ -38,7 +46,7 @@ func (nuu *nuutila) visit(v nodeid) {
 				nuu.S = nuu.S[:len(nuu.S)-1]
 				nuu.C.add(w)
 				nuu.R[w] = v
-				nuu.InCycles = append(nuu.InCycles, w)
+				nuu.InCycles.add(w)
 			}
 		}
 		nuu.T = append(nuu.T, v)

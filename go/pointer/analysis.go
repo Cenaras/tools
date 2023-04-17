@@ -135,6 +135,8 @@ type analysis struct {
 	proxyFuncNodes  map[nodeid]*ssa.Function
 	contextStrategy ContextStrategy // The context strategy to use
 
+	waveConstraints []*waveConstraint
+
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes
 	reflectValueObj     types.Object    // type symbol for reflect.Value (if present)
@@ -338,7 +340,7 @@ func Analyze(config *Config) (result *Result, err error) {
 
 			savedProxyFuncNodes := copyMap(a.proxyFuncNodes)
 
-			a.solve()
+			a.waveSolve()
 			a.dumpSolution("A.pts", N)
 
 			// Restore.
@@ -364,7 +366,7 @@ func Analyze(config *Config) (result *Result, err error) {
 		runtime.GC()
 	}
 
-	a.solve()
+	a.waveSolve()
 
 	// Compare solutions.
 	if optHVN && debugHVNCrossCheck {
