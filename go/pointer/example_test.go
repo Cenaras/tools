@@ -77,7 +77,6 @@ func main() {
 	C := mainPkg.Type("C").Type()
 	Cfm := prog.LookupMethod(C, mainPkg.Pkg, "f").Params[1]
 	config.AddQuery(Cfm)
-
 	// Run the pointer analysis.
 	result, err := pointer.Analyze(config)
 	if err != nil {

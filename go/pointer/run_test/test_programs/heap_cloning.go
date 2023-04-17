@@ -20,13 +20,15 @@ func (t *T) bar(x *int) *S {
 	return &S{x}
 }
 
+var s1 *S
+
 func heap1() {
-	var t1 I = &T{}
-	var t2 I = &T{}
-	s1 := t1.bar(&a)
-	s2 := t2.bar(&b)
-	print(s1.x)
-	print(s2.x)
+	var t1 = &T{}
+	var t2 = &T{}
+	s1 = t1.bar(&a)
+	s1 = t2.bar(&b)
+	print(s1)
+	//print(s2)
 }
 
 func (t *T) foo(x *int) *S {
