@@ -55,7 +55,9 @@ func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 			if x.pts.addAll(&y.pts) {
 				a.addWork(x.id)
 			}
-			x.copyTo.addAll(&y.copyTo)
+			for _, w := range y.copyTo.AppendTo(deltaSpace) {
+				x.copyTo.add(a.nodes[w].solve.find().id)
+			}
 			x.complex = append(x.complex, y.complex...) // TODO: Dedupe
 			if !x.prevPTS.IsEmpty() {
 				stale.add(x.id)

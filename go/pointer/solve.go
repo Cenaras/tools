@@ -153,7 +153,7 @@ func (a *analysis) waveSolve() {
 			break
 		}
 		i++
-		fmt.Fprintf(os.Stdout, "Loop iteration %d", i)
+		fmt.Fprintf(os.Stdout, "Loop iteration %d\n", i)
 
 	}
 

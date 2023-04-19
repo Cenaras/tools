@@ -3,26 +3,38 @@
 
 package main
 
-type S struct{ x int }
+type I interface {
+	foo() *int
+}
 
-var c S
+type S struct{ x *int }
+
+func (s *S) foo() *int {
+	c = s.x
+	d = &a
+	e = &d
+	*e = c
+	c = *e
+	return *e
+}
+
+var a, b int
+var c, d *int
+var e **int
 
 func cycles1() {
-	a := &c
-	d := c
-	b := *a
-	*a = b
-
-	print(a.x)
-	print(b)
-	print(c.x)
-	print(d)
+	c = &a
+	d = &a
+	e = &d
+	*e = c
+	c = *e
+	print(c)
 }
 
 func cycles2() {
-	x := S{2}
-	y := S{3}
-	x, y = y, x
+	var s I = &S{&b}
+	t := s.foo()
+	print(t)
 }
 
 func main() {
