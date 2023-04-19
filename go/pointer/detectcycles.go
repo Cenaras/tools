@@ -1,7 +1,5 @@
 package pointer
 
-import "fmt"
-
 type nuutila struct {
 	a        *analysis
 	I        int
@@ -43,7 +41,6 @@ func (nuu *nuutila) visit(v nodeid) {
 	if nuu.R[v] == v {
 		nuu.C.add(v)
 		for len(nuu.S) != 0 {
-			fmt.Printf("stack: %s\n", nuu.S)
 			w := nuu.S[len(nuu.S)-1]
 			if nuu.D[w] <= nuu.D[v] {
 				break

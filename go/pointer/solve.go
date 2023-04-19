@@ -106,21 +106,21 @@ func (a *analysis) waveSolve() {
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
 	}
-	first := true
+	//first := true
 	var diff nodeset
 	i := 0
 	for {
 		start := time.Now()
 		a.processNewConstraints()
 		fmt.Fprintf(os.Stdout, "Elapsed time for new constraints: %f\n", time.Since(start).Seconds())
-
-		if first {
-			first = false
-			for id, _ := range a.nodes {
-				a.cycleCandidates.add(nodeid(id))
+		/*
+			if first {
+				first = false
+				for id, _ := range a.nodes {
+					a.cycleCandidates.add(nodeid(id))
+				}
 			}
-		}
-
+		*/
 		start = time.Now()
 		//Detect and collapse cycles
 		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
@@ -207,7 +207,7 @@ func (a *analysis) processNewConstraints() {
 			dst := a.nodes[c.dst]
 			solve := dst.solve.find()
 			solve.pts.add(c.src)
-			a.cycleCandidates.add(solve.id)
+			a.addWork(solve.id)
 
 			// Populate the worklist with nodes that point to
 			// something initially (due to addrConstraints) and
