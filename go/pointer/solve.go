@@ -106,13 +106,20 @@ func (a *analysis) waveSolve() {
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
 	}
-
+	first := true
 	var diff nodeset
 	i := 0
 	for {
 		start := time.Now()
 		a.processNewConstraints()
 		fmt.Fprintf(os.Stdout, "Elapsed time for new constraints: %f\n", time.Since(start).Seconds())
+
+		if first {
+			first = false
+			for id, _ := range a.nodes {
+				a.cycleCandidates.add(nodeid(id))
+			}
+		}
 
 		start = time.Now()
 		//Detect and collapse cycles
@@ -200,6 +207,7 @@ func (a *analysis) processNewConstraints() {
 			dst := a.nodes[c.dst]
 			solve := dst.solve.find()
 			solve.pts.add(c.src)
+			a.cycleCandidates.add(solve.id)
 
 			// Populate the worklist with nodes that point to
 			// something initially (due to addrConstraints) and
@@ -290,6 +298,7 @@ func (a *analysis) addLabel(ptr, label nodeid) bool {
 }
 
 func (a *analysis) addWork(id nodeid) {
+	a.cycleCandidates.add(a.nodes[id].solve.find().id)
 	/*
 		id = a.nodes[id].solve.find().id
 		a.work.Insert(int(id))
@@ -306,16 +315,19 @@ func (a *analysis) addWork(id nodeid) {
 // The size of the copy is implicitly 1.
 // It returns true if pts(dst) changed.
 func (a *analysis) onlineCopy(dst, src nodeid) bool {
-	if dst != src {
-		if nsrc := a.nodes[src]; nsrc.solve.find().copyTo.add(dst) {
+	ndst := a.nodes[dst].solve.find()
+	nsrc := a.nodes[src].solve.find()
+	if ndst.id != nsrc.id {
+		if nsrc.copyTo.add(ndst.id) {
+			a.cycleCandidates.add(nsrc.id)
 			if a.log != nil {
-				fmt.Fprintf(a.log, "\t\t\tdynamic copy n%d <- n%d\n", dst, src)
+				fmt.Fprintf(a.log, "\t\t\tdynamic copy n%d <- n%d\n", ndst.id, nsrc.id)
 			}
 			// TODO(adonovan): most calls to onlineCopy
 			// are followed by addWork, possibly batched
 			// via a 'changed' flag; see if there's a
 			// noticeable penalty to calling addWork here.
-			return a.nodes[dst].solve.find().pts.addAll(&nsrc.solve.find().prevPTS)
+			return ndst.pts.addAll(&nsrc.prevPTS)
 		}
 	}
 	return false

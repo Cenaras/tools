@@ -136,6 +136,7 @@ type analysis struct {
 	contextStrategy ContextStrategy // The context strategy to use
 
 	waveConstraints []*waveConstraint
+	cycleCandidates nodeset
 
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes

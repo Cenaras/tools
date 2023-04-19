@@ -14,11 +14,13 @@ type nuutila struct {
 }
 
 func (nuu *nuutila) visitAll() {
-	for x, n := range nuu.a.nodes {
-		if id := nodeid(x); n.solve.find().id == id && nuu.D[id] == 0 {
+	var deltaSpace []int
+	for _, x := range nuu.a.cycleCandidates.AppendTo(deltaSpace) {
+		if id := nodeid(x); nuu.a.nodes[id].solve.find().id == id && nuu.D[id] == 0 {
 			nuu.visit(id)
 		}
 	}
+	nuu.a.cycleCandidates.Clear()
 }
 
 func (nuu *nuutila) visit(v nodeid) {
