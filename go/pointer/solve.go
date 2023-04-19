@@ -118,8 +118,10 @@ func (a *analysis) waveSolve() {
 		//Detect and collapse cycles
 		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
 		nuu.visitAll()
+		fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
+		start = time.Now()
 		unify(a, &nuu.InCycles, nuu.R)
-		fmt.Fprintf(os.Stdout, "Elapsed time for detect and collapse cycles: %f\n", time.Since(start).Seconds())
+		fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
 
 		start = time.Now()
 		// Wave propagation

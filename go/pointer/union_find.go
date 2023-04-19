@@ -1,6 +1,8 @@
 package pointer
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Define functions on Graph, give arguments to methods
 
@@ -39,7 +41,7 @@ func (ufNode *UFNode) union(other *UFNode) {
 
 // Do a bunched unify instead of a set of nodes to unify rather than this.
 func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
-	var stale nodeset
+	//var stale nodeset
 	var deltaSpace []int
 	for _, id := range inCycles.AppendTo(deltaSpace) {
 		v := nodeid(id)
@@ -56,18 +58,23 @@ func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 				a.addWork(x.id)
 			}
 			for _, w := range y.copyTo.AppendTo(deltaSpace) {
+				//a.onlineCopy(a.nodes[w].solve.find().id, x.id)
 				x.copyTo.add(a.nodes[w].solve.find().id)
+				a.nodes[w].solve.find().pts.addAll(&x.prevPTS)
 			}
-			x.complex = append(x.complex, y.complex...) // TODO: Dedupe
-			if !x.prevPTS.IsEmpty() {
+			//x.complex = append(x.complex, y.complex...) // TODO: Dedupe
+			/*if !x.prevPTS.IsEmpty() {
 				stale.add(x.id)
 			}
+			*/
 			xsolve.union(ysolve)
 		}
 	}
-	var deltaSpace2 []int
-	for _, id := range stale.AppendTo(deltaSpace2) {
-		n := a.nodes[id]
-		a.solveConstraints(n, &n.solve.find().prevPTS)
-	}
+	/*
+		var deltaSpace2 []int
+		for _, id := range stale.AppendTo(deltaSpace2) {
+			n := a.nodes[id]
+			a.solveConstraints(n, &n.solve.find().prevPTS)
+		}
+	*/
 }
