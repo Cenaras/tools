@@ -287,3 +287,7 @@ func (p Pointer) MayAlias(q Pointer) bool {
 func (p Pointer) DynamicTypes() *typeutil.Map {
 	return p.PointsTo().DynamicTypes()
 }
+
+func (p Pointer) IsValidPointer() bool {
+	return p.n != 0
+}
