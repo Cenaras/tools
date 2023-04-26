@@ -11,7 +11,6 @@ import (
 
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/loader"
-	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/pointer"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
@@ -38,29 +37,23 @@ func run_engine(filename string, contextStrategy pointer.ContextStrategy) {
 	// Create single-file main package and import its dependencies.
 	conf.CreateFromFiles("main", file)
 
-	p, _ := packages.Load(nil, filename)
-
-	//iprog, err := conf.Load()
+	iprog, err := conf.Load()
 	if err != nil {
 		fmt.Print(err) // type error in some package
 		return
 	}
 
 	// Create SSA-form program representation.
-	prog, _ := ssautil.AllPackages(p, 0)
-	//mainPkg := prog.Package(iprog.Created[0].Pkg)
+	prog := ssautil.CreateProgram(iprog, ssa.InstantiateGenerics)
+	mainPkg := prog.Package(iprog.Created[0].Pkg)
 
 	// Build SSA code for bodies of all functions in the whole program.
 	prog.Build()
 
-	mains := ssautil.MainPackages(prog.AllPackages())
-
-	allPackages := prog.AllPackages()
-
 	//var log bytes.Buffer
 	// Configure the pointer analysis to build a call-graph.
 	config := &pointer.Config{
-		Mains:           mains,
+		Mains:           []*ssa.Package{mainPkg},
 		BuildCallGraph:  true,
 		Log:             os.Stdout,
 		ContextStrategy: contextStrategy,
