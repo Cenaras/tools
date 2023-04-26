@@ -604,27 +604,29 @@ func (a *analysis) genStaticCall(caller *cgnode, site *callsite, call *ssa.CallC
 	sig := call.Signature()
 	args := call.Args
 	if a.contextStrategy.TreatStaticInvoke() && sig.Recv() != nil {
-		recv := a.valueNode(args[0])
-		args = args[1:]
-		// Allocate a contiguous targets/params/results block for this call.
-		block := a.nextNode()
-		// pts(targets) will be the set of possible call targets
-		site.targets = a.addOneNode(sig, "invoke.targets", nil)
-		p := a.addNodes(sig.Params(), "invoke.params")
-		r := a.addNodes(sig.Results(), "invoke.results")
+		if _, ok := sig.Recv().Type().(*types.Pointer); ok {
+			recv := a.valueNode(args[0])
+			args = args[1:]
+			// Allocate a contiguous targets/params/results block for this call.
+			block := a.nextNode()
+			// pts(targets) will be the set of possible call targets
+			site.targets = a.addOneNode(sig, "invoke.targets", nil)
+			p := a.addNodes(sig.Params(), "invoke.params")
+			r := a.addNodes(sig.Results(), "invoke.results")
 
-		// Copy the actual parameters into the call's params block.
-		for i, n := 0, sig.Params().Len(); i < n; i++ {
-			sz := a.sizeof(sig.Params().At(i).Type())
-			a.copy(p, a.valueNode(args[i]), sz)
-			p += nodeid(sz)
+			// Copy the actual parameters into the call's params block.
+			for i, n := 0, sig.Params().Len(); i < n; i++ {
+				sz := a.sizeof(sig.Params().At(i).Type())
+				a.copy(p, a.valueNode(args[i]), sz)
+				p += nodeid(sz)
+			}
+			// Copy the call's results block to the actual results.
+			if result != 0 {
+				a.copy(result, r, a.sizeof(sig.Results()))
+			}
+			a.addConstraint(&staticInvokeConstraint{fn, recv, block, site, caller.context})
+			return
 		}
-		// Copy the call's results block to the actual results.
-		if result != 0 {
-			a.copy(result, r, a.sizeof(sig.Results()))
-		}
-		a.addConstraint(&staticInvokeConstraint{fn, recv, block, site, caller.context})
-		return
 	}
 
 	// If context strategy uses context, create a new. Otherwise use the empty context for this call.
