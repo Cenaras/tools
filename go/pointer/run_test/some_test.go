@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"testing"
+
+	"golang.org/x/tools/go/pointer"
 )
 
 func Test(t *testing.T) {
 	// Don't assert @pointsto(t) since its label contains a fragile line number.
-	run_engine("D:\\Uni\\etcd\\etcd\\contrib\\raftexample\\main.go", nil)
+	run_engine("test_programs/param_types.go", &pointer.Insens{})
 	t.Fail()
 }
 

@@ -40,9 +40,9 @@ func bar(i I) *int {
 func context2() {
 	var s1 I
 	if unknown {
-		s1 = S{&a}
+		s1 = &S{&a}
 	} else {
-		s1 = S{&b}
+		s1 = &S{&b}
 	}
 	//s1.x = &b
 	print(s1.foo())
@@ -98,6 +98,6 @@ func interface2() {
 
 func main() {
 	//context1()
-	//context2()
-	interface2()
+	context2()
+	//interface2()
 }
