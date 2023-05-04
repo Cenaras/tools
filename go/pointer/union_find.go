@@ -4,41 +4,6 @@ import (
 	"fmt"
 )
 
-// Define functions on Graph, give arguments to methods
-
-type UFNode struct {
-	solverState *solverState // Solver state of the underlying node represented.
-	parent      *UFNode      // The representative of this node - nil if root
-}
-
-func (uFNode *UFNode) find() *solverState {
-	return uFNode.findParent().solverState
-}
-
-// Returns the representative of this node.
-func (ufNode *UFNode) findParent() *UFNode {
-	if ufNode.parent != nil {
-		ufNode.parent = ufNode.parent.findParent()
-		return ufNode.parent
-	}
-	// Somewhat inefficient as we essentially traverse twice, down --> top, top --> down.
-	return ufNode
-}
-
-// ufNode becomes the parent of other
-func (ufNode *UFNode) union(other *UFNode) {
-	x := ufNode.findParent()
-	y := other.findParent()
-
-	if x == y {
-		return
-	}
-
-	y.parent = x
-	// No need to keep old solverstate
-	y.solverState = nil
-}
-
 func (a *analysis) find(x nodeid) nodeid {
 	xn := a.nodes[x]
 	rep := xn.rep
@@ -49,7 +14,6 @@ func (a *analysis) find(x nodeid) nodeid {
 	return rep
 }
 
-// Do a bunched unify instead of a set of nodes to unify rather than this.
 func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 	//var stale nodeset
 	var deltaSpace []int

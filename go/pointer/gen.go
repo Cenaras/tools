@@ -59,7 +59,7 @@ func (a *analysis) addNodes(typ types.Type, comment string) nodeid {
 // subelement indicates the subelement, e.g. ".a.b[*].c".
 func (a *analysis) addOneNode(typ types.Type, comment string, subelement *fieldInfo) nodeid {
 	id := a.nextNode()
-	a.nodes = append(a.nodes, &node{typ: typ, subelement: subelement, solve: new(solverState)})
+	a.nodes = append(a.nodes, &node{typ: typ, subelement: subelement, solve: new(solverState), rep: id})
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\tcreate n%d %s for %s%s\n",
 			id, typ, comment, subelement.path())

@@ -132,6 +132,9 @@ func (a *analysis) waveSolve() {
 			t = t[:len(t)-1]
 			nsolve := a.nodes[v].solve
 			diff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
+			if v == 42 {
+				print("")
+			}
 			nsolve.prevPTS.Copy(&nsolve.pts.Sparse)
 			for _, w := range nsolve.copyTo.AppendTo(a.deltaSpace) {
 				a.nodes[nodeid(w)].solve.pts.addAll(&diff)
@@ -204,9 +207,7 @@ func (a *analysis) processNewConstraints() {
 			// something initially (due to addrConstraints) and
 			// have other constraints attached.
 			// (A no-op in round 1.)
-			if !dst.solve.copyTo.IsEmpty() {
-				a.addWork(c.dst)
-			}
+			a.addWork(c.dst)
 		}
 	}
 
@@ -306,11 +307,9 @@ func (a *analysis) onlineCopy(dst, src nodeid) bool {
 			if a.log != nil {
 				fmt.Fprintf(a.log, "\t\t\tdynamic copy n%d <- n%d\n", dst, src)
 			}
-			// TODO(adonovan): most calls to onlineCopy
-			// are followed by addWork, possibly batched
-			// via a 'changed' flag; see if there's a
-			// noticeable penalty to calling addWork here.
-			return a.nodes[dst].solve.pts.addAll(&nsrc.solve.pts)
+
+			a.addWork(dst)
+			return a.nodes[dst].solve.pts.addAll(&nsrc.solve.prevPTS)
 		}
 	}
 	return false

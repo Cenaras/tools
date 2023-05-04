@@ -109,6 +109,11 @@ func (a *analysis) renumber() {
 		}
 	}
 
+	// Renumber representatives
+	for _, n := range a.nodes {
+		n.rep = renumbering[n.rep]
+	}
+
 	// Renumber nodeids in global objects.
 	for v, id := range a.globalobj {
 		a.globalobj[v] = renumbering[id]
