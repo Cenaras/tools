@@ -102,6 +102,8 @@ type node struct {
 	// equivalence class.  Each node is created with its own state
 	// but they become shared after HVN.
 	solve *solverState
+
+	rep nodeid
 }
 
 // An analysis instance holds the state of a single pointer analysis problem.
@@ -127,6 +129,8 @@ type analysis struct {
 	result      *Result                     // results of the analysis
 	track       track                       // pointerlike types whose aliasing we track
 	deltaSpace  []int                       // working space for iterating over PTS deltas
+
+	waveConstraints []*waveConstraint
 
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes
@@ -326,7 +330,7 @@ func Analyze(config *Config) (result *Result, err error) {
 		runtime.GC()
 	}
 
-	a.solve()
+	a.waveSolve()
 
 	// Compare solutions.
 	if optHVN && debugHVNCrossCheck {
