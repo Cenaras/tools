@@ -308,7 +308,7 @@ func (a *analysis) onlineCopy(dst, src nodeid) bool {
 				fmt.Fprintf(a.log, "\t\t\tdynamic copy n%d <- n%d\n", dst, src)
 			}
 
-			a.addWork(dst)
+			a.addWork(src)
 			return a.nodes[dst].solve.pts.addAll(&nsrc.solve.prevPTS)
 		}
 	}

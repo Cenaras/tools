@@ -13,6 +13,7 @@ type nuutila struct {
 
 func (nuu *nuutila) visitAll() {
 	var deltaSpace []int
+	//for x, _ := range nuu.a.nodes {
 	for _, x := range nuu.a.work.AppendTo(deltaSpace) {
 		if id := nodeid(x); nuu.a.find(id) == id && nuu.D[id] == 0 {
 			nuu.visit(id)

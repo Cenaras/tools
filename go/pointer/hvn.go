@@ -795,6 +795,7 @@ func (h *hvn) simplify() {
 			// Link the solver states for the two nodes.
 			assert(h.a.nodes[canonID].solve != nil, "missing solver state")
 			h.a.nodes[id].solve = h.a.nodes[canonID].solve
+			h.a.nodes[id].rep = canonID
 
 			if h.a.log != nil {
 				// TODO(adonovan): debug: reorganize the log so it prints

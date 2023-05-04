@@ -25,8 +25,8 @@ import (
 
 const (
 	// optimization options; enable all when committing
-	optRenumber = false // enable renumbering optimization (makes logs hard to read)
-	optHVN      = false // enable pointer equivalence via Hash-Value Numbering
+	optRenumber = true // enable renumbering optimization (makes logs hard to read)
+	optHVN      = true // enable pointer equivalence via Hash-Value Numbering
 
 	// debugging options; disable all when committing
 	debugHVN           = false // enable assertions in HVN
@@ -307,7 +307,7 @@ func Analyze(config *Config) (result *Result, err error) {
 			// solutions.
 			savedConstraints := a.constraints
 
-			a.solve()
+			a.waveSolve()
 			a.dumpSolution("A.pts", N)
 
 			// Restore.
