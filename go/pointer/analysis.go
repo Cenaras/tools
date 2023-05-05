@@ -102,6 +102,8 @@ type node struct {
 	// equivalence class.  Each node is created with its own state
 	// but they become shared after HVN.
 	solve *solverState
+
+	rep nodeid
 }
 
 // An analysis instance holds the state of a single pointer analysis problem.

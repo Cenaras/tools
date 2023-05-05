@@ -13,10 +13,11 @@ import (
 )
 
 type solverState struct {
-	complex []constraint // complex constraints attached to this node
-	copyTo  nodeset      // simple copy constraint edges
-	pts     nodeset      // points-to set of this node
-	prevPTS nodeset      // pts(n) in previous iteration (for difference propagation)
+	complex     []constraint // complex constraints attached to this node
+	copyTo      nodeset      // simple copy constraint edges
+	pts         nodeset      // points-to set of this node
+	prevPTS     nodeset      // pts(n) in previous iteration (for difference propagation)
+	checkedLazy nodeset
 }
 
 func (a *analysis) solve() {
@@ -56,7 +57,7 @@ func (a *analysis) solve() {
 		n.solve.prevPTS.Copy(&n.solve.pts.Sparse)
 
 		// Apply all resolution rules attached to n.
-		a.solveConstraints(n, &delta)
+		a.solveConstraints(n, &delta, true)
 
 		if a.log != nil {
 			fmt.Fprintf(a.log, "\t\tpts(n%d) = %s\n", id, &n.solve.pts)
@@ -143,14 +144,14 @@ func (a *analysis) processNewConstraints() {
 	var space [50]int
 	for _, id := range stale.AppendTo(space[:0]) {
 		n := a.nodes[nodeid(id)]
-		a.solveConstraints(n, &n.solve.prevPTS)
+		a.solveConstraints(n, &n.solve.prevPTS, false)
 	}
 }
 
 // solveConstraints applies each resolution rule attached to node n to
 // the set of labels delta.  It may generate new constraints in
 // a.constraints.
-func (a *analysis) solveConstraints(n *node, delta *nodeset) {
+func (a *analysis) solveConstraints(n *node, delta *nodeset, detectCycles bool) {
 	if delta.IsEmpty() {
 		return
 	}
@@ -166,7 +167,17 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset) {
 	// Process copy constraints.
 	var copySeen nodeset
 	for _, x := range n.solve.copyTo.AppendTo(a.deltaSpace) {
-		mid := nodeid(x)
+		mid := a.find(nodeid(x))
+		m := a.nodes[mid]
+		if detectCycles && n.solve.pts.Equals(&m.solve.pts.Sparse) && !n.solve.checkedLazy.Has(int(mid)) {
+			if a.log != nil {
+				fmt.Fprintf(a.log, "\t\tDETECT AND COLLAPSE CYCLES %d -> %d\n", a.find(n.rep), mid)
+			}
+			nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
+			nuu.visit(mid)
+			unify(a, &nuu.InCycles, nuu.R)
+			n.solve.checkedLazy.add(mid)
+		}
 		if copySeen.add(mid) {
 			if a.nodes[mid].solve.pts.addAll(delta) {
 				a.addWork(mid)
