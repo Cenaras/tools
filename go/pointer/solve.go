@@ -187,6 +187,101 @@ func (a *analysis) waveSolve() {
 	}
 }
 
+func (a *analysis) deepSolve() {
+	start("Solving")
+	if a.log != nil {
+		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
+	}
+	a.processNewConstraints()
+
+	//first := true
+	var diff nodeset
+	start := time.Now()
+	nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
+	nuu.visitAll()
+	fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
+	start = time.Now()
+	unify(a, &nuu.InCycles, nuu.R)
+	fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
+
+	start = time.Now()
+	// Wave propagation
+	t := nuu.T
+	for len(t) != 0 {
+		v := t[len(t)-1]
+		t = t[:len(t)-1]
+		nsolve := a.nodes[v].solve
+		diff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
+		if v == 42 {
+			print("")
+		}
+		nsolve.prevPTS.Copy(&nsolve.pts.Sparse)
+		for _, w := range nsolve.copyTo.AppendTo(a.deltaSpace) {
+			a.nodes[nodeid(w)].solve.pts.addAll(&diff)
+		}
+	}
+	fmt.Fprintf(os.Stdout, "Elapsed time for label propagation: %f\n", time.Since(start).Seconds())
+
+	i := 0
+	for {
+		a.processNewConstraints()
+		fmt.Fprintf(os.Stdout, "Elapsed time for new constraints: %f\n", time.Since(start).Seconds())
+		/*
+			if first {
+				first = false
+				for id, _ := range a.nodes {
+					a.cycleCandidates.add(nodeid(id))
+				}
+			}
+		*/
+		start = time.Now()
+		//Detect and collapse cycles
+
+		start = time.Now()
+		var changed bool = false
+		for _, wc := range a.waveConstraints {
+			id := wc.constraint.ptr()
+			var pnew nodeset
+			pnew.Difference(&a.nodes[id].solve.pts.Sparse, &wc.cache.Sparse)
+			if wc.cache.addAll(&pnew) {
+				changed = true
+			}
+			wc.constraint.solve(a, &pnew)
+		}
+		fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
+
+		if !changed {
+			break
+		}
+		i++
+		fmt.Fprintf(os.Stdout, "Loop iteration %d\n", i)
+
+	}
+
+	if !a.nodes[0].solve.pts.IsEmpty() {
+		panic(fmt.Sprintf("pts(0) is nonempty: %s", &a.nodes[0].solve.pts))
+	}
+
+	// Release working state (but keep final PTS).
+	for _, n := range a.nodes {
+		solve := n.solve
+		solve.complex = nil
+		solve.copyTo.Clear()
+		solve.prevPTS.Clear()
+	}
+
+	if a.log != nil {
+		fmt.Fprintf(a.log, "Solver done\n")
+
+		// Dump solution.
+		for i, n := range a.nodes {
+			if !n.solve.pts.IsEmpty() {
+				fmt.Fprintf(a.log, "pts(n%d) = %s : %s\n", i, &n.solve.pts, n.typ)
+			}
+		}
+	}
+}
+
 // processNewConstraints takes the new constraints from a.constraints
 // and adds them to the graph, ensuring
 // that new constraints are applied to pre-existing labels and
