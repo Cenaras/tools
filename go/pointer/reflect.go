@@ -1070,7 +1070,7 @@ func (c *reflectIndirectConstraint) solve(a *analysis, delta *nodeset) {
 		var res nodeid
 		if tPtr, ok := tDyn.Underlying().(*types.Pointer); ok {
 			// load the payload of the pointer's tagged object
-			// into a new tagged object
+			// into a new tagged objectIndire
 			res = a.makeTagged(tPtr.Elem(), c.cgn, nil)
 			a.load(res+1, vObj+1, 0, a.sizeof(tPtr.Elem()))
 		} else {

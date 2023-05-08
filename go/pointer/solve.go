@@ -17,7 +17,7 @@ type solverState struct {
 	copyTo  nodeset      // simple copy constraint edges
 	pts     nodeset      // points-to set of this node
 	prevPTS nodeset      // pts(n) in previous iteration (for difference propagation)
-	id      nodeid
+	cacheDiff nodeset	 // TODO COMMENT
 }
 
 type waveConstraint struct {
@@ -99,7 +99,6 @@ func (a *analysis) puSolve() {
 		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
 	}
 	//first := true
-	var diff nodeset
 	i := 0
 	for {
 		//start := time.Now()
@@ -132,9 +131,10 @@ func (a *analysis) puSolve() {
 				continue
 			}
 			nsolve := a.nodes[v].solve
-			diff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
+			nsolve.cacheDiff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
+			nsolve.prevPTS.Copy(&nsolve.pts.Sparse)
 			for _, w := range nsolve.copyTo.AppendTo(a.deltaSpace) {
-				if a.nodes[nodeid(w)].solve.pts.addAll(&diff) {
+				if a.nodes[nodeid(w)].solve.pts.addAll(&nsolve.cacheDiff) {
 					a.addWork(nodeid(w))
 				}
 			}
@@ -149,18 +149,15 @@ func (a *analysis) puSolve() {
 		a.work.Clear()
 		for _, n := range complexWork.AppendTo(a.deltaSpace) {
 			nsolve := a.nodes[n].solve
-			var diff *nodeset
-			diff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
-			nsolve.prevPTS.Copy(&nsolve.pts.Sparse)
 			for _, c := range nsolve.complex {
 				if a.log != nil {
 					fmt.Fprintf(a.log, "\t\tconstraint %s\n", c)
 				}
-				c.solve(a, diff)
+				c.solve(a, &nsolve.cacheDiff)
 			}
 		}
 		//fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
-		if a.work.IsEmpty() {
+		if a.work.IsEmpty() && len(a.constraints) == 0 {
 			break
 		}
 		i++
@@ -213,7 +210,6 @@ func (a *analysis) processNewConstraints() {
 				// (A no-op in round 1.)
 				a.addWork(c.dst)
 			}
-
 		}
 	}
 
@@ -236,6 +232,9 @@ func (a *analysis) processNewConstraints() {
 			id = c.ptr()
 			solve := a.nodes[id].solve
 			solve.complex = append(solve.complex, c)
+			if !solve.prevPTS.IsEmpty() {
+				c.solve(a, &solve.prevPTS)
+			}
 			//a.waveConstraints = append(a.waveConstraints, &waveConstraint{constraint: c})
 		}
 		/*
