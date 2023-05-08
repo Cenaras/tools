@@ -35,6 +35,10 @@ func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 				xsolve.copyTo.add(a.find(nodeid(w)))
 				a.nodes[w].solve.pts.addAll(&xsolve.prevPTS)
 			}
+			xsolve.complex = append(xsolve.complex, ysolve.complex...)
+			for _, c := range ysolve.complex {
+				c.solve(a, &xsolve.prevPTS)
+			}
 			y.solve = x.solve
 			y.rep = rep
 		}
