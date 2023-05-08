@@ -19,7 +19,7 @@ func (nuu *nuutila) visitAll() {
 			nuu.visit(id)
 		}
 	}
-	nuu.a.work.Clear()
+	//nuu.a.work.Clear()
 }
 
 func (nuu *nuutila) visit(v nodeid) {

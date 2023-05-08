@@ -307,7 +307,7 @@ func Analyze(config *Config) (result *Result, err error) {
 			// solutions.
 			savedConstraints := a.constraints
 
-			a.waveSolve()
+			a.puSolve()
 			a.dumpSolution("A.pts", N)
 
 			// Restore.
@@ -330,7 +330,7 @@ func Analyze(config *Config) (result *Result, err error) {
 		runtime.GC()
 	}
 
-	a.waveSolve()
+	a.puSolve()
 
 	// Compare solutions.
 	if optHVN && debugHVNCrossCheck {
