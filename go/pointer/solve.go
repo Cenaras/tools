@@ -13,11 +13,10 @@ import (
 )
 
 type solverState struct {
-	complex []constraint // complex constraints attached to this node
+	complex []*waveConstraint // complex constraints attached to this node
 	copyTo  nodeset      // simple copy constraint edges
 	pts     nodeset      // points-to set of this node
 	prevPTS nodeset      // pts(n) in previous iteration (for difference propagation)
-	cacheDiff nodeset	 // TODO COMMENT
 }
 
 type waveConstraint struct {
@@ -131,10 +130,11 @@ func (a *analysis) puSolve() {
 				continue
 			}
 			nsolve := a.nodes[v].solve
-			nsolve.cacheDiff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
+			var diff nodeset
+			diff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
 			nsolve.prevPTS.Copy(&nsolve.pts.Sparse)
 			for _, w := range nsolve.copyTo.AppendTo(a.deltaSpace) {
-				if a.nodes[nodeid(w)].solve.pts.addAll(&nsolve.cacheDiff) {
+				if a.nodes[nodeid(w)].solve.pts.addAll(&diff) {
 					a.addWork(nodeid(w))
 				}
 			}
@@ -150,10 +150,13 @@ func (a *analysis) puSolve() {
 		for _, n := range complexWork.AppendTo(a.deltaSpace) {
 			nsolve := a.nodes[n].solve
 			for _, c := range nsolve.complex {
+				var diff nodeset
+				diff.Difference(&nsolve.pts.Sparse, &c.cache.Sparse)
+				c.cache.Copy(&nsolve.pts.Sparse)
 				if a.log != nil {
-					fmt.Fprintf(a.log, "\t\tconstraint %s\n", c)
+					fmt.Fprintf(a.log, "\t\tconstraint %s\n", c.constraint)
 				}
-				c.solve(a, &nsolve.cacheDiff)
+				c.constraint.solve(a, &diff)
 			}
 		}
 		//fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
@@ -231,10 +234,8 @@ func (a *analysis) processNewConstraints() {
 			// complex constraint
 			id = c.ptr()
 			solve := a.nodes[id].solve
-			solve.complex = append(solve.complex, c)
-			if !solve.prevPTS.IsEmpty() {
-				c.solve(a, &solve.prevPTS)
-			}
+			solve.complex = append(solve.complex, &waveConstraint{constraint: c} )
+			a.addWork(id)
 			//a.waveConstraints = append(a.waveConstraints, &waveConstraint{constraint: c})
 		}
 		/*
@@ -267,9 +268,9 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset) {
 	// Process complex constraints dependent on n.
 	for _, c := range n.solve.complex {
 		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\tconstraint %s\n", c)
+			fmt.Fprintf(a.log, "\t\tconstraint %s\n", c.constraint)
 		}
-		c.solve(a, delta)
+		//c.solve(a, delta)
 	}
 
 	// Process copy constraints.
