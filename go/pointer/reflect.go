@@ -1132,7 +1132,9 @@ func (c *reflectMakeChanConstraint) solve(a *analysis, delta *nodeset) {
 
 		// put its address in a new T-tagged object
 		id := a.makeTagged(T, c.cgn, nil)
-		a.addLabel(id+1, obj)
+		if a.addLabel(id+1, obj) {
+			a.addWork(id+1)
+		}
 
 		// flow the T-tagged object to the result
 		if a.addLabel(c.result, id) {
@@ -1193,7 +1195,9 @@ func (c *reflectMakeMapConstraint) solve(a *analysis, delta *nodeset) {
 
 		// put its address in a new T-tagged object
 		id := a.makeTagged(T, c.cgn, nil)
-		a.addLabel(id+1, mapObj)
+		if a.addLabel(id+1, mapObj) {
+			a.addWork(id+1)
+		}
 
 		// flow the T-tagged object to the result
 		if a.addLabel(c.result, id) {
@@ -1250,7 +1254,9 @@ func (c *reflectMakeSliceConstraint) solve(a *analysis, delta *nodeset) {
 
 		// put its address in a new T-tagged object
 		id := a.makeTagged(T, c.cgn, nil)
-		a.addLabel(id+1, obj)
+		if a.addLabel(id+1, obj) {
+			a.addWork(id+1)
+		}
 
 		// flow the T-tagged object to the result
 		if a.addLabel(c.result, id) {
@@ -1307,7 +1313,9 @@ func (c *reflectNewConstraint) solve(a *analysis, delta *nodeset) {
 
 		// put its address in a new *T-tagged object
 		id := a.makeTagged(types.NewPointer(T), c.cgn, nil)
-		a.addLabel(id+1, newObj)
+		if a.addLabel(id+1, newObj) {
+			a.addWork(id+1)
+		}
 
 		// flow the pointer to the result
 		if a.addLabel(c.result, id) {
