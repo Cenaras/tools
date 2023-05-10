@@ -258,6 +258,7 @@ func (a *analysis) hvn() {
 		log:              a.log,
 		hvnLabel:         make(map[string]peLabel),
 		offsetAddrLabels: make(map[offsetAddr]peLabel),
+		refmap:           make(map[onodeid][]int),
 	}
 
 	if h.log != nil {
