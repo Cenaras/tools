@@ -16,8 +16,7 @@ func (a *analysis) find(x nodeid) nodeid {
 
 func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 	//var stale nodeset
-	var deltaSpace []int
-	for _, id := range inCycles.AppendTo(deltaSpace) {
+	for _, id := range inCycles.Slice() {
 		v := a.find(nodeid(id))
 		rep := a.find(r[v])
 		if v != rep {
@@ -31,7 +30,7 @@ func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
 
 			xsolve.pts.addAll(&ysolve.pts)
 
-			for _, w := range ysolve.copyTo.AppendTo(deltaSpace) {
+			for _, w := range ysolve.copyTo.Slice() {
 				xsolve.copyTo.add(a.find(nodeid(w)))
 				a.nodes[w].solve.pts.addAll(&xsolve.prevPTS)
 			}

@@ -10,7 +10,6 @@ import (
 	"go/token"
 	"io"
 
-	"golang.org/x/tools/container/intsets"
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types/typeutil"
@@ -191,8 +190,7 @@ func (s PointsToSet) String() string {
 	var buf bytes.Buffer
 	buf.WriteByte('[')
 	if s.pts != nil {
-		var space [50]int
-		for i, l := range s.pts.AppendTo(space[:0]) {
+		for i, l := range s.pts.Slice() {
 			if i > 0 {
 				buf.WriteString(", ")
 			}
@@ -208,8 +206,7 @@ func (s PointsToSet) String() string {
 func (s PointsToSet) Labels() []*Label {
 	var labels []*Label
 	if s.pts != nil {
-		var space [50]int
-		for _, l := range s.pts.AppendTo(space[:0]) {
+		for _, l := range s.pts.Slice() {
 			labels = append(labels, s.a.labelFor(nodeid(l)))
 		}
 	}
@@ -230,8 +227,7 @@ func (s PointsToSet) DynamicTypes() *typeutil.Map {
 	var tmap typeutil.Map
 	tmap.SetHasher(s.a.hasher)
 	if s.pts != nil {
-		var space [50]int
-		for _, x := range s.pts.AppendTo(space[:0]) {
+		for _, x := range s.pts.Slice() {
 			ifaceObjID := nodeid(x)
 			if !s.a.isTaggedObject(ifaceObjID) {
 				continue // !CanHaveDynamicTypes(tDyn)
@@ -241,8 +237,9 @@ func (s PointsToSet) DynamicTypes() *typeutil.Map {
 				panic("indirect tagged object") // implement later
 			}
 			pts, ok := tmap.At(tDyn).(PointsToSet)
+			empty := newNodeSet()
 			if !ok {
-				pts = PointsToSet{s.a, new(nodeset)}
+				pts = PointsToSet{s.a, &empty}
 				tmap.Set(tDyn, pts)
 			}
 			pts.pts.addAll(&s.a.nodes[v].solve.pts)
@@ -258,9 +255,8 @@ func (s PointsToSet) Intersects(y PointsToSet) bool {
 		return false
 	}
 	// This takes Θ(|x|+|y|) time.
-	var z intsets.Sparse
-	z.Intersection(&s.pts.Sparse, &y.pts.Sparse)
-	return !z.IsEmpty()
+	z := s.pts.Intersect(y.pts.Set)
+	return !z.Empty()
 }
 
 func (p Pointer) String() string {

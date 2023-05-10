@@ -250,7 +250,7 @@ func (c *runtimeSetFinalizerConstraint) String() string {
 }
 
 func (c *runtimeSetFinalizerConstraint) solve(a *analysis, delta *nodeset) {
-	for _, fObj := range delta.AppendTo(a.deltaSpace) {
+	for _, fObj := range delta.Slice() {
 		tDyn, f, indirect := a.taggedValue(nodeid(fObj))
 		if indirect {
 			// TODO(adonovan): we'll need to implement this
@@ -318,7 +318,7 @@ func (c *timeStartTimerConstraint) String() string {
 }
 
 func (c *timeStartTimerConstraint) solve(a *analysis, delta *nodeset) {
-	for _, tObj := range delta.AppendTo(a.deltaSpace) {
+	for _, tObj := range delta.Slice() {
 		t := nodeid(tObj)
 
 		// We model startTimer as if it was defined thus:

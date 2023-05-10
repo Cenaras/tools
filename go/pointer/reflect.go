@@ -181,7 +181,7 @@ func (c *rVBytesConstraint) String() string {
 
 func (c *rVBytesConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, slice, indirect := a.taggedValue(vObj)
 		if indirect {
@@ -243,7 +243,7 @@ func (c *rVCallConstraint) solve(a *analysis, delta *nodeset) {
 	}
 
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, fn, indirect := a.taggedValue(vObj)
 		if indirect {
@@ -383,7 +383,7 @@ func (c *rVElemConstraint) String() string {
 
 func (c *rVElemConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, payload, indirect := a.taggedValue(vObj)
 		if indirect {
@@ -448,7 +448,7 @@ func (c *rVIndexConstraint) String() string {
 
 func (c *rVIndexConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, payload, indirect := a.taggedValue(vObj)
 		if indirect {
@@ -512,7 +512,7 @@ func (c *rVInterfaceConstraint) String() string {
 
 func (c *rVInterfaceConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, payload, indirect := a.taggedValue(vObj)
 		if indirect {
@@ -567,7 +567,7 @@ func (c *rVMapIndexConstraint) String() string {
 
 func (c *rVMapIndexConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, m, indirect := a.taggedValue(vObj)
 		tMap, _ := tDyn.Underlying().(*types.Map)
@@ -623,7 +623,7 @@ func (c *rVMapKeysConstraint) String() string {
 
 func (c *rVMapKeysConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, m, indirect := a.taggedValue(vObj)
 		tMap, _ := tDyn.Underlying().(*types.Map)
@@ -689,7 +689,7 @@ func (c *rVRecvConstraint) String() string {
 
 func (c *rVRecvConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, ch, indirect := a.taggedValue(vObj)
 		tChan, _ := tDyn.Underlying().(*types.Chan)
@@ -743,7 +743,7 @@ func (c *rVSendConstraint) String() string {
 }
 
 func (c *rVSendConstraint) solve(a *analysis, delta *nodeset) {
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, ch, indirect := a.taggedValue(vObj)
 		tChan, _ := tDyn.Underlying().(*types.Chan)
@@ -796,7 +796,7 @@ func (c *rVSetBytesConstraint) String() string {
 }
 
 func (c *rVSetBytesConstraint) solve(a *analysis, delta *nodeset) {
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, slice, indirect := a.taggedValue(vObj)
 		if indirect {
@@ -846,7 +846,7 @@ func (c *rVSetMapIndexConstraint) String() string {
 }
 
 func (c *rVSetMapIndexConstraint) solve(a *analysis, delta *nodeset) {
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, m, indirect := a.taggedValue(vObj)
 		tMap, _ := tDyn.Underlying().(*types.Map)
@@ -909,7 +909,7 @@ func (c *rVSliceConstraint) String() string {
 
 func (c *rVSliceConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, payload, indirect := a.taggedValue(vObj)
 		if indirect {
@@ -990,7 +990,7 @@ func (c *reflectChanOfConstraint) String() string {
 
 func (c *reflectChanOfConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.rtypeTaggedValue(tObj)
 
@@ -1064,7 +1064,7 @@ func (c *reflectIndirectConstraint) String() string {
 
 func (c *reflectIndirectConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		vObj := nodeid(x)
 		tDyn, _, _ := a.taggedValue(vObj)
 		var res nodeid
@@ -1118,7 +1118,7 @@ func (c *reflectMakeChanConstraint) String() string {
 
 func (c *reflectMakeChanConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		typObj := nodeid(x)
 		T := a.rtypeTaggedValue(typObj)
 		tChan, ok := T.Underlying().(*types.Chan)
@@ -1133,7 +1133,7 @@ func (c *reflectMakeChanConstraint) solve(a *analysis, delta *nodeset) {
 		// put its address in a new T-tagged object
 		id := a.makeTagged(T, c.cgn, nil)
 		if a.addLabel(id+1, obj) {
-			a.addWork(id+1)
+			a.addWork(id + 1)
 		}
 
 		// flow the T-tagged object to the result
@@ -1180,7 +1180,7 @@ func (c *reflectMakeMapConstraint) String() string {
 
 func (c *reflectMakeMapConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		typObj := nodeid(x)
 		T := a.rtypeTaggedValue(typObj)
 		tMap, ok := T.Underlying().(*types.Map)
@@ -1196,7 +1196,7 @@ func (c *reflectMakeMapConstraint) solve(a *analysis, delta *nodeset) {
 		// put its address in a new T-tagged object
 		id := a.makeTagged(T, c.cgn, nil)
 		if a.addLabel(id+1, mapObj) {
-			a.addWork(id+1)
+			a.addWork(id + 1)
 		}
 
 		// flow the T-tagged object to the result
@@ -1241,7 +1241,7 @@ func (c *reflectMakeSliceConstraint) String() string {
 
 func (c *reflectMakeSliceConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		typObj := nodeid(x)
 		T := a.rtypeTaggedValue(typObj)
 		if _, ok := T.Underlying().(*types.Slice); !ok {
@@ -1255,7 +1255,7 @@ func (c *reflectMakeSliceConstraint) solve(a *analysis, delta *nodeset) {
 		// put its address in a new T-tagged object
 		id := a.makeTagged(T, c.cgn, nil)
 		if a.addLabel(id+1, obj) {
-			a.addWork(id+1)
+			a.addWork(id + 1)
 		}
 
 		// flow the T-tagged object to the result
@@ -1302,7 +1302,7 @@ func (c *reflectNewConstraint) String() string {
 
 func (c *reflectNewConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		typObj := nodeid(x)
 		T := a.rtypeTaggedValue(typObj)
 
@@ -1314,7 +1314,7 @@ func (c *reflectNewConstraint) solve(a *analysis, delta *nodeset) {
 		// put its address in a new *T-tagged object
 		id := a.makeTagged(types.NewPointer(T), c.cgn, nil)
 		if a.addLabel(id+1, newObj) {
-			a.addWork(id+1)
+			a.addWork(id + 1)
 		}
 
 		// flow the pointer to the result
@@ -1368,7 +1368,7 @@ func (c *reflectPtrToConstraint) String() string {
 
 func (c *reflectPtrToConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.rtypeTaggedValue(tObj)
 
@@ -1419,7 +1419,7 @@ func (c *reflectSliceOfConstraint) String() string {
 
 func (c *reflectSliceOfConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.rtypeTaggedValue(tObj)
 
@@ -1468,7 +1468,7 @@ func (c *reflectTypeOfConstraint) String() string {
 
 func (c *reflectTypeOfConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		iObj := nodeid(x)
 		tDyn, _, _ := a.taggedValue(iObj)
 		if a.addLabel(c.result, a.makeRtype(tDyn)) {
@@ -1521,7 +1521,7 @@ func (c *reflectZeroConstraint) String() string {
 
 func (c *reflectZeroConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		typObj := nodeid(x)
 		T := a.rtypeTaggedValue(typObj)
 
@@ -1587,7 +1587,7 @@ func (c *rtypeElemConstraint) solve(a *analysis, delta *nodeset) {
 		Elem() types.Type
 	}
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.nodes[tObj].obj.data.(types.Type)
 		if tHasElem, ok := T.Underlying().(hasElem); ok {
@@ -1646,7 +1646,7 @@ func (c *rtypeFieldByNameConstraint) solve(a *analysis, delta *nodeset) {
 	// 7	Anonymous bool
 	// }
 
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.nodes[tObj].obj.data.(types.Type)
 		tStruct, ok := T.Underlying().(*types.Struct)
@@ -1727,7 +1727,7 @@ func (c *rtypeInOutConstraint) String() string {
 
 func (c *rtypeInOutConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.nodes[tObj].obj.data.(types.Type)
 		sig, ok := T.Underlying().(*types.Signature)
@@ -1803,7 +1803,7 @@ func (c *rtypeKeyConstraint) String() string {
 
 func (c *rtypeKeyConstraint) solve(a *analysis, delta *nodeset) {
 	changed := false
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.nodes[tObj].obj.data.(types.Type)
 		if tMap, ok := T.Underlying().(*types.Map); ok {
@@ -1864,7 +1864,7 @@ func changeRecv(sig *types.Signature) *types.Signature {
 }
 
 func (c *rtypeMethodByNameConstraint) solve(a *analysis, delta *nodeset) {
-	for _, x := range delta.AppendTo(a.deltaSpace) {
+	for _, x := range delta.Slice() {
 		tObj := nodeid(x)
 		T := a.nodes[tObj].obj.data.(types.Type)
 

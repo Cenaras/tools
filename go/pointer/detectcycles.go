@@ -12,9 +12,8 @@ type nuutila struct {
 }
 
 func (nuu *nuutila) visitAll() {
-	var deltaSpace []int
 	//for x, _ := range nuu.a.nodes {
-	for _, x := range nuu.a.work.AppendTo(deltaSpace) {
+	for _, x := range nuu.a.work.Slice() {
 		if id := nodeid(x); nuu.a.find(id) == id && nuu.D[id] == 0 {
 			nuu.visit(id)
 		}
@@ -26,13 +25,12 @@ func (nuu *nuutila) visit(v nodeid) {
 	nuu.I++
 	nuu.D[v] = nuu.I
 	nuu.R[v] = v
-	var deltaSpace []int
-	for _, x := range nuu.a.nodes[v].solve.copyTo.AppendTo(deltaSpace) {
+	for _, x := range nuu.a.nodes[v].solve.copyTo.Slice() {
 		w := nuu.a.find(nodeid(x))
 		if nuu.D[w] == 0 {
 			nuu.visit(w)
 		}
-		if !nuu.C.Has(int(w)) {
+		if !nuu.C.Contains(int(w)) {
 			if nuu.D[nuu.R[v]] >= nuu.D[nuu.R[w]] {
 				nuu.R[v] = nuu.R[w]
 				nuu.InCycles.add(v)

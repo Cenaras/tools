@@ -10,3 +10,5 @@ require (
 )
 
 require golang.org/x/sync v0.1.0
+
+require github.com/hashicorp/go-set v0.1.12 // indirect
