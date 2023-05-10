@@ -197,6 +197,8 @@ type hvn struct {
 	// For each distinct offsetAddrConstraint (src, offset) pair,
 	// offsetAddrLabels records a unique PE label >= N.
 	offsetAddrLabels map[offsetAddr]peLabel
+
+	refmap map[onodeid][]int
 }
 
 // The index of an node in the offline graph.
@@ -619,11 +621,15 @@ func (h *hvn) visit(x onodeid) {
 		if debugHVNVerbose && h.log != nil {
 			fmt.Fprintf(h.log, "scc o%d\n", x)
 		}
+		var refnodes []int
 		for {
 			// Pop y from stack.
 			i := len(h.stack) - 1
 			y := h.stack[i]
 			h.stack = h.stack[:i]
+			if int(y) >= h.N {
+				refnodes = append(refnodes, int(y)-h.N)
+			}
 
 			h.checkCanonical(x)
 			xo := h.onodes[x]
@@ -634,6 +640,7 @@ func (h *hvn) visit(x onodeid) {
 				// SCC is complete.
 				xo.scc = 1
 				h.labelSCC(x)
+				h.refmap[x] = refnodes
 				break
 			}
 			h.coalesce(x, y)
@@ -764,6 +771,7 @@ func (h *hvn) simplify() {
 	for i := range canon {
 		canon[i] = nodeid(h.N) // indicates "unset"
 	}
+	h.a.hybridMap = make(map[nodeid]nodeid)
 
 	// mapping maps each main node index to the index of the canonical node.
 	mapping := make([]nodeid, len(h.a.nodes))
@@ -781,6 +789,12 @@ func (h *hvn) simplify() {
 		label := peLabel(peLabels.Min())
 
 		canonID := canon[label]
+		refnodes := h.refmap[oid]
+		h.refmap[oid] = h.refmap[oid][:0]
+		for _, v := range refnodes {
+			h.a.hybridMap[nodeid(v)] = nodeid(canonID)
+		}
+
 		if canonID == nodeid(h.N) {
 			// id becomes the representative of the PE label.
 			canonID = id

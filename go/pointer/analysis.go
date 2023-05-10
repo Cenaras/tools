@@ -130,6 +130,8 @@ type analysis struct {
 	track       track                       // pointerlike types whose aliasing we track
 	deltaSpace  []int                       // working space for iterating over PTS deltas
 
+	hybridMap map[nodeid]nodeid
+
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes
 	reflectValueObj     types.Object    // type symbol for reflect.Value (if present)
