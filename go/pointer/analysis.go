@@ -246,6 +246,7 @@ func Analyze(config *Config) (result *Result, err error) {
 			IndirectQueries: make(map[ssa.Value]Pointer),
 		},
 		deltaSpace: make([]int, 0, 100),
+		work:       newNodeSet(),
 	}
 
 	if false {
@@ -313,7 +314,7 @@ func Analyze(config *Config) (result *Result, err error) {
 			// Restore.
 			a.constraints = savedConstraints
 			for _, n := range a.nodes {
-				n.solve = new(solverState)
+				n.solve = &solverState{copyTo: newNodeSet(), pts: newNodeSet(), prevPTS: newNodeSet()}
 			}
 			a.nodes = a.nodes[:N]
 
@@ -349,10 +350,9 @@ func Analyze(config *Config) (result *Result, err error) {
 	}
 
 	// Add dynamic edges to call graph.
-	var space [100]int
 	for _, caller := range a.cgnodes {
 		for _, site := range caller.sites {
-			for _, callee := range a.nodes[site.targets].solve.pts.AppendTo(space[:0]) {
+			for _, callee := range a.nodes[site.targets].solve.pts.Slice() {
 				a.callEdge(caller, site, nodeid(callee))
 			}
 		}
@@ -420,7 +420,7 @@ func (a *analysis) dumpSolution(filename string, N int) {
 			panic(err)
 		}
 		var sep string
-		for _, l := range n.solve.pts.AppendTo(a.deltaSpace) {
+		for _, l := range n.solve.pts.Slice() {
 			if l >= N {
 				break
 			}

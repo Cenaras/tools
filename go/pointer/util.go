@@ -15,7 +15,7 @@ import (
 
 	exec "golang.org/x/sys/execabs"
 
-	"golang.org/x/tools/container/intsets"
+	"github.com/hashicorp/go-set"
 )
 
 // CanPoint reports whether the type T is pointerlike,
@@ -257,14 +257,17 @@ func sliceToArray(slice types.Type) *types.Array {
 // Node set -------------------------------------------------------------------
 
 type nodeset struct {
-	intsets.Sparse
+	*set.Set[int]
+}
+
+func newNodeSet() nodeset {
+	return nodeset{set.New[int](0)}
 }
 
 func (ns *nodeset) String() string {
 	var buf bytes.Buffer
 	buf.WriteRune('{')
-	var space [50]int
-	for i, n := range ns.AppendTo(space[:0]) {
+	for i, n := range ns.Slice() {
 		if i > 0 {
 			buf.WriteString(", ")
 		}
@@ -276,11 +279,23 @@ func (ns *nodeset) String() string {
 }
 
 func (ns *nodeset) add(n nodeid) bool {
-	return ns.Sparse.Insert(int(n))
+	return ns.Insert(int(n))
 }
 
 func (ns *nodeset) addAll(y *nodeset) bool {
-	return ns.UnionWith(&y.Sparse)
+	return ns.InsertSet(y.Set)
+}
+
+func (ns *nodeset) Difference(x, y *nodeset) {
+	ns.Set = x.Set.Difference(y.Set)
+}
+
+func (ns *nodeset) Copy(x *nodeset) {
+	ns.Set = x.Set.Copy()
+}
+
+func (ns *nodeset) Clear() {
+	ns.Set = set.New[int](0)
 }
 
 // Profiling & debugging -------------------------------------------------------
