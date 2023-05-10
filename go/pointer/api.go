@@ -266,8 +266,9 @@ func (p Pointer) String() string {
 
 // PointsTo returns the points-to set of this pointer.
 func (p Pointer) PointsTo() PointsToSet {
+	empty := newNodeSet()
 	if p.n == 0 {
-		return PointsToSet{}
+		return PointsToSet{pts: &empty}
 	}
 	return PointsToSet{p.a, &p.a.nodes[p.n].solve.pts}
 }
