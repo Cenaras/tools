@@ -790,27 +790,33 @@ func (h *hvn) simplify() {
 		label := peLabel(peLabels.Min())
 
 		canonID := canon[label]
-		refnodes := h.refmap[oid]
-		h.refmap[oid] = h.refmap[oid][:0]
-		for _, v := range refnodes {
-			h.a.hybridMap[nodeid(v)] = nodeid(canonID)
-		}
-
+		
 		if canonID == nodeid(h.N) {
 			// id becomes the representative of the PE label.
 			canonID = id
 			canon[label] = canonID
-
+			
 			if h.a.log != nil {
 				fmt.Fprintf(h.a.log, "\tpts(n%d) is canonical : \t(%s)\n",
-					id, h.a.nodes[id].typ)
+				id, h.a.nodes[id].typ)
+			}
+
+			refnodes := h.refmap[oid]
+			h.refmap[oid] = h.refmap[oid][:0]
+			for _, v := range refnodes {
+				h.a.hybridMap[nodeid(v)] = nodeid(canonID)
 			}
 
 		} else {
 			// Link the solver states for the two nodes.
 			assert(h.a.nodes[canonID].solve != nil, "missing solver state")
 			h.a.nodes[id].solve = h.a.nodes[canonID].solve
-
+			
+			refnodes := h.refmap[oid]
+			h.refmap[oid] = h.refmap[oid][:0]
+			for _, v := range refnodes {
+				h.a.hybridMap[nodeid(v)] = nodeid(canonID)
+			}
 			if h.a.log != nil {
 				// TODO(adonovan): debug: reorganize the log so it prints
 				// one line:

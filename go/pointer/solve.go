@@ -62,7 +62,7 @@ func (a *analysis) solve() {
 			
 			for _, v := range delta.AppendTo(a.deltaSpace) {
 				r[a.find(nodeid(v))] = x
-				checkers.add(nodeid(v))
+				checkers.add(a.find(nodeid(v)))
 			}
 			unify(a, &checkers, r)
 		}
