@@ -11,16 +11,13 @@ func (s *S) foo() *int {
 	return &a
 }
 
-func staticInvoke1(s *S) {
+func staticInvoke1() {
+	var s *S
 	var x *int
-	if s != nil {
-		x = s.foo()
-	} else {
-		x = &b
-	}
+	x = s.foo()
 	print(x)
 }
 
 func main() {
-	staticInvoke1(nil)
+	staticInvoke1()
 }

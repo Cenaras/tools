@@ -25,6 +25,7 @@ var (
 	tEface     = types.NewInterfaceType(nil, nil).Complete()
 	tInvalid   = types.Typ[types.Invalid]
 	tUnsafePtr = types.Typ[types.UnsafePointer]
+	tNil       = types.Typ[types.UntypedNil]
 )
 
 // ---------- Node creation ----------
@@ -848,7 +849,9 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 				a.proxyFuncNodes[obj] = v
 
 			case *ssa.Const:
-				// not addressable
+				if v.IsNil() {
+					obj = a.nilNode
+				}
 
 			case *ssa.FreeVar:
 				// not addressable
@@ -1377,6 +1380,8 @@ func (a *analysis) generate() {
 	// Create a dummy node since we use the nodeid 0 for
 	// non-pointerlike variables.
 	a.addNodes(tInvalid, "(zero)")
+	a.nilNode = a.addNodes(tNil, "(nil)")
+	a.endObject(a.nilNode, nil, "nil")
 
 	// Create the global node for panic values.
 	a.panicNode = a.addNodes(tEface, "panic")

@@ -110,6 +110,7 @@ type analysis struct {
 	prog        *ssa.Program                // the program being analyzed
 	log         io.Writer                   // log stream; nil to disable
 	panicNode   nodeid                      // sink for panic, source for recover
+	nilNode     nodeid                      // nil node
 	nodes       []*node                     // indexed by nodeid
 	flattenMemo map[types.Type][]*fieldInfo // memoization of flatten()
 	trackTypes  map[types.Type]bool         // memoization of shouldTrack()

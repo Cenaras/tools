@@ -9,7 +9,7 @@ import (
 
 func Test(t *testing.T) {
 	// Don't assert @pointsto(t) since its label contains a fragile line number.
-	run_engine("test_programs/param_types.go", &pointer.Insens{})
+	run_engine("test_programs/static_invoke.go", &pointer.KObjNHeap{1, 0, true})
 	t.Fail()
 }
 
