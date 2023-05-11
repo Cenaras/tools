@@ -17,7 +17,6 @@ type solverState struct {
 	copyTo  nodeset      // simple copy constraint edges
 	pts     nodeset      // points-to set of this node
 	prevPTS nodeset      // pts(n) in previous iteration (for difference propagation)
-	id      nodeid
 }
 
 type waveConstraint struct {
@@ -98,31 +97,16 @@ func (a *analysis) waveSolve() {
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
 	}
-	//first := true
 	var diff nodeset
-	i := 0
 	for {
-		//start := time.Now()
 		a.processNewConstraints()
-		//fmt.Fprintf(os.Stdout, "Elapsed time for new constraints: %f\n", time.Since(start).Seconds())
-		/*
-			if first {
-				first = false
-				for id, _ := range a.nodes {
-					a.cycleCandidates.add(nodeid(id))
-				}
-			}
-		*/
-		//start = time.Now()
+
 		//Detect and collapse cycles
 		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
 		nuu.visitAll()
-		//fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
-		//start = time.Now()
 		unify(a, &nuu.InCycles, nuu.R)
-		//fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
 
-		//start = time.Now()
+
 		// Wave propagation
 		t := nuu.T
 		for len(t) != 0 {
@@ -130,17 +114,13 @@ func (a *analysis) waveSolve() {
 			t = t[:len(t)-1]
 			nsolve := a.nodes[v].solve
 			diff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
-			if v == 42 {
-				print("")
-			}
+
 			nsolve.prevPTS.Copy(&nsolve.pts.Sparse)
 			for _, w := range nsolve.copyTo.AppendTo(a.deltaSpace) {
 				a.nodes[nodeid(w)].solve.pts.addAll(&diff)
 			}
 		}
-		//fmt.Fprintf(os.Stdout, "Elapsed time for label propagation: %f\n", time.Since(start).Seconds())
 
-		//start = time.Now()
 		var changed bool = false
 		for _, wc := range a.waveConstraints {
 			id := wc.constraint.ptr()
@@ -151,14 +131,9 @@ func (a *analysis) waveSolve() {
 			}
 			wc.constraint.solve(a, &pnew)
 		}
-		//fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
-
 		if !changed {
 			break
 		}
-		i++
-		//fmt.Fprintf(os.Stdout, "Loop iteration %d\n", i)
-
 	}
 
 	if !a.nodes[0].solve.pts.IsEmpty() {
