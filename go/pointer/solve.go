@@ -56,15 +56,16 @@ func (a *analysis) solve() {
 		}
 		n.solve.prevPTS.Copy(&n.solve.pts.Sparse)
 
-		var r map[nodeid]nodeid = make(map[nodeid]nodeid)
-		var checkers nodeset
 		if x, ok := a.hybridMap[id]; ok {
+			var r map[nodeid]nodeid = make(map[nodeid]nodeid)
+			var checkers nodeset
+			
 			for _, v := range delta.AppendTo(a.deltaSpace) {
-				r[nodeid(v)] = x
+				r[a.find(nodeid(v))] = x
 				checkers.add(nodeid(v))
 			}
+			unify(a, &checkers, r)
 		}
-		unify(a, &checkers, r)
 
 		// Apply all resolution rules attached to n.
 		a.solveConstraints(n, &delta, true)

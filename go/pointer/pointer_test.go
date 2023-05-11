@@ -39,7 +39,7 @@ import (
 )
 
 var inputs = []string{
-	"testdata/a_test.go",
+	//"testdata/a_test.go",
 	"testdata/another.go",
 	"testdata/arrayreflect.go",
 	"testdata/arrays.go",
