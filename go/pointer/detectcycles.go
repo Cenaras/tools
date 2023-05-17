@@ -46,9 +46,9 @@ func (nuu *nuutila) visit(v nodeid) {
 				break
 			} else {
 				nuu.S = nuu.S[:len(nuu.S)-1]
-				nuu.C[v] = struct{}{}
+				nuu.C[w] = struct{}{}
 				nuu.R[w] = v
-				nuu.InCycles[v] = struct{}{}
+				nuu.InCycles[w] = struct{}{}
 			}
 		}
 		nuu.T = append(nuu.T, v)
