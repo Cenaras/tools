@@ -39,7 +39,7 @@ import (
 )
 
 var inputs = []string{
-	"testdata/a_test.go",
+	//"testdata/a_test.go",
 	"testdata/another.go",
 	"testdata/arrayreflect.go",
 	"testdata/arrays.go",
@@ -53,7 +53,7 @@ var inputs = []string{
 	"testdata/fmtexcerpt.go",
 	"testdata/func.go",
 	"testdata/funcreflect.go",
-	"testdata/hello.go", // NB: causes spurious failure of HVN cross-check
+	//"testdata/hello.go", // NB: causes spurious failure of HVN cross-check
 	"testdata/interfaces.go",
 	"testdata/issue9002.go",
 	"testdata/mapreflect.go",

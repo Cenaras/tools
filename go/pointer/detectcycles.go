@@ -5,10 +5,10 @@ type nuutila struct {
 	I        int
 	D        map[nodeid]int
 	R        map[nodeid]nodeid
-	C        nodeset
+	C        map[nodeid]struct{}
 	S        []nodeid
 	T        []nodeid
-	InCycles nodeset
+	InCycles map[nodeid]struct{}
 }
 
 func (nuu *nuutila) visitAll() {
@@ -31,24 +31,24 @@ func (nuu *nuutila) visit(v nodeid) {
 		if nuu.D[w] == 0 {
 			nuu.visit(w)
 		}
-		if !nuu.C.Has(int(w)) {
+		if _, ok := nuu.C[w]; !ok {
 			if nuu.D[nuu.R[v]] >= nuu.D[nuu.R[w]] {
 				nuu.R[v] = nuu.R[w]
-				nuu.InCycles.add(v)
+				nuu.InCycles[v] = struct{}{}
 			}
 		}
 	}
 	if nuu.R[v] == v {
-		nuu.C.add(v)
+		nuu.C[v] = struct{}{}
 		for len(nuu.S) != 0 {
 			w := nuu.S[len(nuu.S)-1]
 			if nuu.D[w] <= nuu.D[v] {
 				break
 			} else {
 				nuu.S = nuu.S[:len(nuu.S)-1]
-				nuu.C.add(w)
+				nuu.C[w] = struct{}{}
 				nuu.R[w] = v
-				nuu.InCycles.add(w)
+				nuu.InCycles[w] = struct{}{}
 			}
 		}
 		nuu.T = append(nuu.T, v)

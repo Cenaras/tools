@@ -14,10 +14,10 @@ func (a *analysis) find(x nodeid) nodeid {
 	return rep
 }
 
-func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
+func unify(a *analysis, inCycles map[nodeid]struct{}, r map[nodeid]nodeid) {
 	//var stale nodeset
 	var deltaSpace []int
-	for _, id := range inCycles.AppendTo(deltaSpace) {
+	for id := range inCycles {
 		v := a.find(nodeid(id))
 		rep := a.find(r[v])
 		if v != rep {
