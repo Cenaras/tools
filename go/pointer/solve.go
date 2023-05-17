@@ -25,74 +25,6 @@ type waveConstraint struct {
 	cache      nodeset
 }
 
-func (a *analysis) solve() {
-	start("Solving")
-	if a.log != nil {
-		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
-	}
-
-	// Solver main loop.
-	var delta nodeset
-	for {
-		// Add new constraints to the graph:
-		// static constraints from SSA on round 1,
-		// dynamic constraints from reflection thereafter.
-		a.processNewConstraints()
-
-		var x int
-		if !a.work.TakeMin(&x) {
-			break // empty
-		}
-		id := nodeid(x)
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\tnode n%d\n", id)
-		}
-
-		n := a.nodes[id]
-
-		// Difference propagation.
-		delta.Difference(&n.solve.pts.Sparse, &n.solve.prevPTS.Sparse)
-		if delta.IsEmpty() {
-			continue
-		}
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\tpts(n%d : %s) = %s + %s\n",
-				id, n.typ, &delta, &n.solve.prevPTS)
-		}
-		n.solve.prevPTS.Copy(&n.solve.pts.Sparse)
-
-		// Apply all resolution rules attached to n.
-		a.solveConstraints(n, &delta)
-
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\tpts(n%d) = %s\n", id, &n.solve.pts)
-		}
-	}
-
-	if !a.nodes[0].solve.pts.IsEmpty() {
-		panic(fmt.Sprintf("pts(0) is nonempty: %s", &a.nodes[0].solve.pts))
-	}
-
-	// Release working state (but keep final PTS).
-	for _, n := range a.nodes {
-		n.solve.complex = nil
-		n.solve.copyTo.Clear()
-		n.solve.prevPTS.Clear()
-	}
-
-	if a.log != nil {
-		fmt.Fprintf(a.log, "Solver done\n")
-
-		// Dump solution.
-		for i, n := range a.nodes {
-			if !n.solve.pts.IsEmpty() {
-				fmt.Fprintf(a.log, "pts(n%d) = %s : %s\n", i, &n.solve.pts, n.typ)
-			}
-		}
-	}
-	stop("Solving")
-}
-
 func (a *analysis) waveSolve() {
 	start("Solving")
 	if a.log != nil {
@@ -144,12 +76,11 @@ func (a *analysis) waveSolve() {
 		var changed bool = false
 		for _, wc := range a.waveConstraints {
 			id := wc.constraint.ptr()
-			var pnew nodeset
-			pnew.Difference(&a.nodes[id].solve.pts.Sparse, &wc.cache.Sparse)
-			if wc.cache.addAll(&pnew) {
+			diff.Difference(&a.nodes[id].solve.pts.Sparse, &wc.cache.Sparse)
+			if wc.cache.addAll(&diff) {
 				changed = true
 			}
-			wc.constraint.solve(a, &pnew)
+			wc.constraint.solve(a, &diff)
 		}
 		//fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
 
@@ -288,7 +219,7 @@ func (a *analysis) addLabel(ptr, label nodeid) bool {
 }
 
 func (a *analysis) addWork(id nodeid) {
-	a.work.Insert(int(a.find(id)))
+	a.work[a.find(id)] = struct{}{}
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\t\twork: n%d\n", id)
 	}
