@@ -14,82 +14,14 @@ import (
 
 type solverState struct {
 	complex []*waveConstraint // complex constraints attached to this node
-	copyTo  nodeset      // simple copy constraint edges
-	pts     nodeset      // points-to set of this node
-	prevPTS nodeset      // pts(n) in previous iteration (for difference propagation)
+	copyTo  nodeset           // simple copy constraint edges
+	pts     nodeset           // points-to set of this node
+	prevPTS nodeset           // pts(n) in previous iteration (for difference propagation)
 }
 
 type waveConstraint struct {
 	constraint constraint
 	cache      nodeset
-}
-
-func (a *analysis) solve() {
-	start("Solving")
-	if a.log != nil {
-		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
-	}
-
-	// Solver main loop.
-	var delta nodeset
-	for {
-		// Add new constraints to the graph:
-		// static constraints from SSA on round 1,
-		// dynamic constraints from reflection thereafter.
-		a.processNewConstraints()
-
-		var x int
-		if !a.work.TakeMin(&x) {
-			break // empty
-		}
-		id := nodeid(x)
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\tnode n%d\n", id)
-		}
-
-		n := a.nodes[id]
-
-		// Difference propagation.
-		delta.Difference(&n.solve.pts.Sparse, &n.solve.prevPTS.Sparse)
-		if delta.IsEmpty() {
-			continue
-		}
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\tpts(n%d : %s) = %s + %s\n",
-				id, n.typ, &delta, &n.solve.prevPTS)
-		}
-		n.solve.prevPTS.Copy(&n.solve.pts.Sparse)
-
-		// Apply all resolution rules attached to n.
-		a.solveConstraints(n, &delta)
-
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\tpts(n%d) = %s\n", id, &n.solve.pts)
-		}
-	}
-
-	if !a.nodes[0].solve.pts.IsEmpty() {
-		panic(fmt.Sprintf("pts(0) is nonempty: %s", &a.nodes[0].solve.pts))
-	}
-
-	// Release working state (but keep final PTS).
-	for _, n := range a.nodes {
-		n.solve.complex = nil
-		n.solve.copyTo.Clear()
-		n.solve.prevPTS.Clear()
-	}
-
-	if a.log != nil {
-		fmt.Fprintf(a.log, "Solver done\n")
-
-		// Dump solution.
-		for i, n := range a.nodes {
-			if !n.solve.pts.IsEmpty() {
-				fmt.Fprintf(a.log, "pts(n%d) = %s : %s\n", i, &n.solve.pts, n.typ)
-			}
-		}
-	}
-	stop("Solving")
 }
 
 func (a *analysis) puSolve() {
@@ -126,7 +58,7 @@ func (a *analysis) puSolve() {
 		for len(t) != 0 {
 			v := t[len(t)-1]
 			t = t[:len(t)-1]
-			if !a.work.Has(int(v)) {
+			if _, ok := a.work[v]; !ok {
 				continue
 			}
 			nsolve := a.nodes[v].solve
@@ -144,10 +76,9 @@ func (a *analysis) puSolve() {
 
 		//start = time.Now()
 		//var changed bool = false
-		var complexWork nodeset
-		complexWork.Copy(&a.work.Sparse)
-		a.work.Clear()
-		for _, n := range complexWork.AppendTo(a.deltaSpace) {
+		complexWork := a.work
+		a.work = make(map[nodeid]struct{})
+		for n, _ := range complexWork {
 			nsolve := a.nodes[n].solve
 			for _, c := range nsolve.complex {
 				var diff nodeset
@@ -160,7 +91,7 @@ func (a *analysis) puSolve() {
 			}
 		}
 		//fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
-		if a.work.IsEmpty() && len(a.constraints) == 0 {
+		if len(a.work) == 0 && len(a.constraints) == 0 {
 			break
 		}
 		i++
@@ -234,7 +165,7 @@ func (a *analysis) processNewConstraints() {
 			// complex constraint
 			id = c.ptr()
 			solve := a.nodes[id].solve
-			solve.complex = append(solve.complex, &waveConstraint{constraint: c} )
+			solve.complex = append(solve.complex, &waveConstraint{constraint: c})
 			a.addWork(id)
 			//a.waveConstraints = append(a.waveConstraints, &waveConstraint{constraint: c})
 		}
@@ -295,7 +226,7 @@ func (a *analysis) addLabel(ptr, label nodeid) bool {
 }
 
 func (a *analysis) addWork(id nodeid) {
-	a.work.Insert(int(a.find(id)))
+	a.work[a.find(id)] = struct{}{}
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\t\twork: n%d\n", id)
 	}
