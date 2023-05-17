@@ -45,11 +45,11 @@ func (a *analysis) puSolve() {
 		*/
 		//start = time.Now()
 		//Detect and collapse cycles
-		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
+		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid), C: make(map[nodeid]struct{}), InCycles: make(map[nodeid]struct{})}
 		nuu.visitAll()
 		//fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
 		//start = time.Now()
-		unify(a, &nuu.InCycles, nuu.R)
+		unify(a, nuu.InCycles, nuu.R)
 		//fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
 
 		//start = time.Now()
