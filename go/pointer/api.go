@@ -172,6 +172,7 @@ type Result struct {
 	Queries         map[ssa.Value]Pointer // pts(v) for each v in Config.Queries.
 	IndirectQueries map[ssa.Value]Pointer // pts(*v) for each v in Config.IndirectQueries.
 	Warnings        []Warning             // warnings of unsoundness
+	NoNodes         int                   // Number of nodes
 }
 
 // A Pointer is an equivalence class of pointer-like values.

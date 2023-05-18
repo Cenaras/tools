@@ -396,7 +396,7 @@ func Analyze(config *Config) (result *Result, err error) {
 			}
 		}
 	}
-
+	a.result.NoNodes = len(a.nodes)
 	return a.result, nil
 }
 
