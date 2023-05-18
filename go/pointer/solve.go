@@ -10,8 +10,6 @@ package pointer
 import (
 	"fmt"
 	"go/types"
-	"os"
-	"time"
 )
 
 type solverState struct {
@@ -36,9 +34,9 @@ func (a *analysis) waveSolve() {
 	var diff nodeset
 	i := 0
 	for {
-		start := time.Now()
+		//start := time.Now()
 		a.processNewConstraints()
-		fmt.Fprintf(os.Stdout, "Elapsed time for new constraints: %f\n", time.Since(start).Seconds())
+		//fmt.Fprintf(os.Stdout, "Elapsed time for new constraints: %f\n", time.Since(start).Seconds())
 		/*
 			if first {
 				first = false
@@ -47,16 +45,16 @@ func (a *analysis) waveSolve() {
 				}
 			}
 		*/
-		start = time.Now()
+		//start = time.Now()
 		//Detect and collapse cycles
 		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid), C: make(map[nodeid]struct{}), InCycles: make(map[nodeid]struct{})}
 		nuu.visitAll()
-		fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
-		start = time.Now()
+		//fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
+		//start = time.Now()
 		unify(a, nuu.InCycles, nuu.R)
-		fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
+		//fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
 
-		start = time.Now()
+		//start = time.Now()
 		// Wave propagation
 		t := nuu.T
 		for len(t) != 0 {
@@ -69,9 +67,9 @@ func (a *analysis) waveSolve() {
 				a.nodes[nodeid(w)].solve.pts.addAll(&diff)
 			}
 		}
-		fmt.Fprintf(os.Stdout, "Elapsed time for label propagation: %f\n", time.Since(start).Seconds())
+		//fmt.Fprintf(os.Stdout, "Elapsed time for label propagation: %f\n", time.Since(start).Seconds())
 
-		start = time.Now()
+		//start = time.Now()
 		var changed bool = false
 		for _, wc := range a.waveConstraints {
 			id := wc.constraint.ptr()
@@ -82,13 +80,13 @@ func (a *analysis) waveSolve() {
 			}
 			wc.constraint.solve(a, &pnew)
 		}
-		fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
+		//fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
 
 		if !changed {
 			break
 		}
 		i++
-		fmt.Fprintf(os.Stdout, "Loop iteration %d\n", i)
+		//fmt.Fprintf(os.Stdout, "Loop iteration %d\n", i)
 
 	}
 
