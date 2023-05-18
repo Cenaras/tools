@@ -247,7 +247,7 @@ func (s PointsToSet) DynamicTypes() *typeutil.Map {
 				pts = PointsToSet{s.a, new(nodeset)}
 				tmap.Set(tDyn, pts)
 			}
-			pts.pts.addAll(&s.a.nodes[v].solve.find().pts)
+			pts.pts.addAll(&s.a.nodes[v].solve.pts)
 		}
 	}
 	return &tmap
@@ -274,7 +274,7 @@ func (p Pointer) PointsTo() PointsToSet {
 	if p.n == 0 {
 		return PointsToSet{}
 	}
-	return PointsToSet{p.a, &p.a.nodes[p.n].solve.find().pts}
+	return PointsToSet{p.a, &p.a.nodes[p.n].solve.pts}
 }
 
 // MayAlias reports whether the receiver pointer may alias

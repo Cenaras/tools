@@ -100,8 +100,10 @@ type node struct {
 
 	// Solver state for the canonical node of this pointer-
 	// equivalence class.  Each node is created with its own state
-	// but they become shared after HVN. - OLD COMMENTS
-	solve *UFNode
+	// but they become shared after HVN.
+	solve *solverState
+
+	rep nodeid
 }
 
 // An analysis instance holds the state of a single pointer analysis problem.
@@ -124,7 +126,7 @@ type analysis struct {
 	localobj    map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
 	atFuncs     map[*ssa.Function]bool      // address-taken functions (for presolver)
 	mapValues   []nodeid                    // values of makemap objects (indirect in HVN)
-	work        nodeset                     // solver's worklist
+	work        map[nodeid]struct{}         // solver's worklist
 	result      *Result                     // results of the analysis
 	track       track                       // pointerlike types whose aliasing we track
 	deltaSpace  []int                       // working space for iterating over PTS deltas
@@ -137,7 +139,6 @@ type analysis struct {
 	contextStrategy ContextStrategy // The context strategy to use
 
 	waveConstraints []*waveConstraint
-	cycleCandidates nodeset
 
 	// Reflection & intrinsics:
 	hasher              typeutil.Hasher // cache of type hashes
@@ -263,6 +264,7 @@ func Analyze(config *Config) (result *Result, err error) {
 		heapinfo2:       make(map[nodeid]HeapContext),
 		proxyFuncNodes:  make(map[nodeid]*ssa.Function),
 		contextStrategy: config.ContextStrategy,
+		work:            make(map[nodeid]struct{}),
 	}
 
 	if a.contextStrategy == nil {
@@ -350,8 +352,8 @@ func Analyze(config *Config) (result *Result, err error) {
 			a.globalobj = savedGlobalObj
 			a.globalval = savedGlobalVal
 			a.proxyFuncNodes = savedProxyFuncNodes
-			for id, n := range a.nodes {
-				n.solve = &UFNode{solverState: &solverState{id: nodeid(id)}, parent: nil}
+			for _, n := range a.nodes {
+				n.solve = new(solverState)
 			}
 			a.nodes = a.nodes[:N]
 
@@ -390,7 +392,7 @@ func Analyze(config *Config) (result *Result, err error) {
 	var space [100]int
 	for _, caller := range a.cgnodes {
 		for _, site := range caller.sites {
-			for _, callee := range a.nodes[site.targets].solve.find().pts.AppendTo(space[:0]) {
+			for _, callee := range a.nodes[site.targets].solve.pts.AppendTo(space[:0]) {
 				a.callEdge(caller, site, nodeid(callee))
 			}
 		}
@@ -466,7 +468,7 @@ func (a *analysis) dumpSolution(filename string, N int) {
 			panic(err)
 		}
 		var sep string
-		for _, l := range n.solve.find().pts.AppendTo(a.deltaSpace) {
+		for _, l := range n.solve.pts.AppendTo(a.deltaSpace) {
 			if l >= N {
 				break
 			}
@@ -505,7 +507,7 @@ func (a *analysis) showCounts() {
 		// Show number of pointer equivalence classes.
 		m := make(map[*solverState]bool)
 		for _, n := range a.nodes {
-			m[n.solve.find()] = true
+			m[n.solve] = true
 		}
 		fmt.Fprintf(a.log, "# ptsets:\t%d\n", len(m))
 	}

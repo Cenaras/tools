@@ -4,77 +4,39 @@ import (
 	"fmt"
 )
 
-// Define functions on Graph, give arguments to methods
-
-type UFNode struct {
-	solverState *solverState // Solver state of the underlying node represented.
-	parent      *UFNode      // The representative of this node - nil if root
-}
-
-func (uFNode *UFNode) find() *solverState {
-	return uFNode.findParent().solverState
-}
-
-// Returns the representative of this node.
-func (ufNode *UFNode) findParent() *UFNode {
-	if ufNode.parent != nil {
-		ufNode.parent = ufNode.parent.findParent()
-		return ufNode.parent
+func (a *analysis) find(x nodeid) nodeid {
+	xn := a.nodes[x]
+	rep := xn.rep
+	if rep != x {
+		rep = a.find(rep) // simple path compression
+		xn.rep = rep
 	}
-	// Somewhat inefficient as we essentially traverse twice, down --> top, top --> down.
-	return ufNode
+	return rep
 }
 
-// ufNode becomes the parent of other
-func (ufNode *UFNode) union(other *UFNode) {
-	x := ufNode.findParent()
-	y := other.findParent()
-
-	if x == y {
-		return
-	}
-
-	y.parent = x
-	// No need to keep old solverstate
-	y.solverState = nil
-}
-
-// Do a bunched unify instead of a set of nodes to unify rather than this.
-func unify(a *analysis, inCycles *nodeset, r map[nodeid]nodeid) {
+func unify(a *analysis, inCycles map[nodeid]struct{}, r map[nodeid]nodeid) {
 	//var stale nodeset
 	var deltaSpace []int
-	for _, id := range inCycles.AppendTo(deltaSpace) {
-		v := nodeid(id)
-		if v != r[v] {
-			xsolve := a.nodes[r[v]].solve
-			x := xsolve.find()
-			ysolve := a.nodes[v].solve
-			y := ysolve.find()
+	for id := range inCycles {
+		v := a.find(nodeid(id))
+		rep := a.find(r[v])
+		if v != rep {
+			x := a.nodes[rep]
+			xsolve := x.solve
+			y := a.nodes[v]
+			ysolve := y.solve
 			if a.log != nil {
-				fmt.Fprintf(a.log, "Unifying %d into %d\n", y.id, x.id)
+				fmt.Fprintf(a.log, "Unifying %d into %d\n", v, rep)
 			}
 
-			if x.pts.addAll(&y.pts) {
-				a.addWork(x.id)
+			xsolve.pts.addAll(&ysolve.pts)
+
+			for _, w := range ysolve.copyTo.AppendTo(deltaSpace) {
+				xsolve.copyTo.add(a.find(nodeid(w)))
+				a.nodes[w].solve.pts.addAll(&xsolve.prevPTS)
 			}
-			for _, w := range y.copyTo.AppendTo(deltaSpace) {
-				//a.onlineCopy(a.nodes[w].solve.find().id, x.id)
-				x.copyTo.add(a.nodes[w].solve.find().id)
-				a.nodes[w].solve.find().pts.addAll(&x.prevPTS)
-			}
-			//x.complex = append(x.complex, y.complex...) // TODO: Dedupe
-			/*if !x.prevPTS.IsEmpty() {
-				stale.add(x.id)
-			}
-			*/
-			xsolve.union(ysolve)
+			y.solve = x.solve
+			y.rep = rep
 		}
 	}
-	/*
-		var deltaSpace2 []int
-		for _, id := range stale.AppendTo(deltaSpace2) {
-			n := a.nodes[id]
-			a.solveConstraints(n, &n.solve.find().prevPTS)
-		}
-	*/
 }

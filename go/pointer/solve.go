@@ -15,90 +15,16 @@ import (
 )
 
 type solverState struct {
-	id      nodeid       // nodeid of the attached node
 	complex []constraint // complex constraints attached to this node
 	copyTo  nodeset      // simple copy constraint edges
 	pts     nodeset      // points-to set of this node
 	prevPTS nodeset      // pts(n) in previous iteration (for difference propagation)
+	id      nodeid       // nodeid of the attached node
 }
 
 type waveConstraint struct {
 	constraint constraint
 	cache      nodeset
-}
-
-func (a *analysis) solve() {
-	start("Solving")
-	if a.log != nil {
-		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
-	}
-
-	// Solver main loop.
-	var delta nodeset
-	for {
-		// Add new constraints to the graph:
-		// static constraints from SSA on round 1,
-		// dynamic constraints from reflection or context sensitve invocations thereafter.
-		a.processNewConstraints()
-
-		var x int
-		if !a.work.TakeMin(&x) {
-			break // empty
-		}
-		id := nodeid(x)
-		if a.nodes[id].solve.find().id != id {
-			continue // A collapsed node
-		}
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\tnode n%d\n", id)
-		}
-
-		n := a.nodes[id]
-
-		// Difference propagation.
-		solve := n.solve.find()
-		delta.Difference(&solve.pts.Sparse, &solve.prevPTS.Sparse)
-		if delta.IsEmpty() {
-			continue
-		}
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\tpts(n%d : %s) = %s + %s\n",
-				id, n.typ, &delta, &n.solve.find().prevPTS)
-		}
-		solve.prevPTS.Copy(&solve.pts.Sparse)
-
-		// Apply all resolution rules attached to n.
-		a.solveConstraints(n, &delta)
-
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\tpts(n%d) = %s\n", id, &n.solve.find().pts)
-		}
-
-	}
-
-	if !a.nodes[0].solve.find().pts.IsEmpty() {
-		panic(fmt.Sprintf("pts(0) is nonempty: %s", &a.nodes[0].solve.find().pts))
-	}
-
-	// Release working state (but keep final PTS).
-	for _, n := range a.nodes {
-		solve := n.solve.find()
-		solve.complex = nil
-		solve.copyTo.Clear()
-		solve.prevPTS.Clear()
-	}
-
-	if a.log != nil {
-		fmt.Fprintf(a.log, "Solver done\n")
-
-		// Dump solution.
-		for i, n := range a.nodes {
-			if !n.solve.find().pts.IsEmpty() {
-				fmt.Fprintf(a.log, "pts(n%d) = %s : %s\n", i, &n.solve.find().pts, n.typ)
-			}
-		}
-	}
-	stop("Solving")
 }
 
 func (a *analysis) waveSolve() {
@@ -123,11 +49,11 @@ func (a *analysis) waveSolve() {
 		*/
 		start = time.Now()
 		//Detect and collapse cycles
-		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
+		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid), C: make(map[nodeid]struct{}), InCycles: make(map[nodeid]struct{})}
 		nuu.visitAll()
 		fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
 		start = time.Now()
-		unify(a, &nuu.InCycles, nuu.R)
+		unify(a, nuu.InCycles, nuu.R)
 		fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
 
 		start = time.Now()
@@ -136,11 +62,11 @@ func (a *analysis) waveSolve() {
 		for len(t) != 0 {
 			v := t[len(t)-1]
 			t = t[:len(t)-1]
-			nsolve := a.nodes[v].solve.find()
+			nsolve := a.nodes[v].solve
 			diff.Difference(&nsolve.pts.Sparse, &nsolve.prevPTS.Sparse)
 			nsolve.prevPTS.Copy(&nsolve.pts.Sparse)
 			for _, w := range nsolve.copyTo.AppendTo(a.deltaSpace) {
-				a.nodes[nodeid(w)].solve.find().pts.addAll(&diff)
+				a.nodes[nodeid(w)].solve.pts.addAll(&diff)
 			}
 		}
 		fmt.Fprintf(os.Stdout, "Elapsed time for label propagation: %f\n", time.Since(start).Seconds())
@@ -150,7 +76,7 @@ func (a *analysis) waveSolve() {
 		for _, wc := range a.waveConstraints {
 			id := wc.constraint.ptr()
 			var pnew nodeset
-			pnew.Difference(&a.nodes[id].solve.find().pts.Sparse, &wc.cache.Sparse)
+			pnew.Difference(&a.nodes[id].solve.pts.Sparse, &wc.cache.Sparse)
 			if wc.cache.addAll(&pnew) {
 				changed = true
 			}
@@ -166,13 +92,13 @@ func (a *analysis) waveSolve() {
 
 	}
 
-	if !a.nodes[0].solve.find().pts.IsEmpty() {
-		panic(fmt.Sprintf("pts(0) is nonempty: %s", &a.nodes[0].solve.find().pts))
+	if !a.nodes[0].solve.pts.IsEmpty() {
+		panic(fmt.Sprintf("pts(0) is nonempty: %s", &a.nodes[0].solve.pts))
 	}
 
 	// Release working state (but keep final PTS).
 	for _, n := range a.nodes {
-		solve := n.solve.find()
+		solve := n.solve
 		solve.complex = nil
 		solve.copyTo.Clear()
 		solve.prevPTS.Clear()
@@ -183,8 +109,8 @@ func (a *analysis) waveSolve() {
 
 		// Dump solution.
 		for i, n := range a.nodes {
-			if !n.solve.find().pts.IsEmpty() {
-				fmt.Fprintf(a.log, "pts(n%d) = %s : %s\n", i, &n.solve.find().pts, n.typ)
+			if !n.solve.pts.IsEmpty() {
+				fmt.Fprintf(a.log, "pts(n%d) = %s : %s\n", i, &n.solve.pts, n.typ)
 			}
 		}
 	}
@@ -205,19 +131,14 @@ func (a *analysis) processNewConstraints() {
 	for _, c := range constraints {
 		if c, ok := c.(*addrConstraint); ok {
 			dst := a.nodes[c.dst]
-			solve := dst.solve.find()
-			solve.pts.add(c.src)
-			a.addWork(solve.id)
+			if dst.solve.pts.add(c.src) {
+				// Populate the worklist with nodes that point to
+				// something initially (due to addrConstraints) and
+				// have other constraints attached.
+				// (A no-op in round 1.)
+				a.addWork(c.dst)
+			}
 
-			// Populate the worklist with nodes that point to
-			// something initially (due to addrConstraints) and
-			// have other constraints attached.
-			// (A no-op in round 1.)
-			/*
-				if !solve.copyTo.IsEmpty() || len(solve.complex) > 0 {
-					a.addWork(c.dst)
-				}
-			*/
 		}
 	}
 
@@ -232,23 +153,25 @@ func (a *analysis) processNewConstraints() {
 		case *copyConstraint:
 			// simple (copy) constraint
 			id = c.src
-			a.onlineCopy(c.dst, id)
-			//a.nodes[id].solve.find().copyTo.add(c.dst)
+			a.nodes[id].solve.copyTo.add(c.dst)
+			a.nodes[c.dst].solve.pts.addAll(&a.nodes[id].solve.prevPTS)
+			a.addWork(c.dst)
 		default:
 			// complex constraint
-			// id = c.ptr()
-			// solve := a.nodes[id].solve.find()
-			// solve.complex = append(solve.complex, c)
+			//id = c.ptr()
+			//solve := a.nodes[id].solve
+			//solve.complex = append(solve.complex, c)
 			a.waveConstraints = append(a.waveConstraints, &waveConstraint{constraint: c})
 		}
 		/*
-			if n := a.nodes[id]; !n.solve.find().pts.IsEmpty() {
-				if !n.solve.find().prevPTS.IsEmpty() {
+			if n := a.nodes[id]; !n.solve.pts.IsEmpty() {
+				if !n.solve.prevPTS.IsEmpty() {
 					stale.add(id)
 				}
 				a.addWork(id)
 			}
 		*/
+
 	}
 	/*
 		// Apply new constraints to pre-existing PTS labels.
@@ -269,7 +192,7 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset) {
 	}
 
 	// Process complex constraints dependent on n.
-	for _, c := range n.solve.find().complex {
+	for _, c := range n.solve.complex {
 		if a.log != nil {
 			fmt.Fprintf(a.log, "\t\tconstraint %s\n", c)
 		}
@@ -278,10 +201,10 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset) {
 
 	// Process copy constraints.
 	var copySeen nodeset
-	for _, x := range n.solve.find().copyTo.AppendTo(a.deltaSpace) {
+	for _, x := range n.solve.copyTo.AppendTo(a.deltaSpace) {
 		mid := nodeid(x)
 		if copySeen.add(mid) {
-			if a.nodes[mid].solve.find().pts.addAll(delta) {
+			if a.nodes[mid].solve.pts.addAll(delta) {
 				a.addWork(mid)
 			}
 		}
@@ -290,7 +213,7 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset) {
 
 // addLabel adds label to the points-to set of ptr and reports whether the set grew.
 func (a *analysis) addLabel(ptr, label nodeid) bool {
-	b := a.nodes[ptr].solve.find().pts.add(label)
+	b := a.nodes[ptr].solve.pts.add(label)
 	if b && a.log != nil {
 		fmt.Fprintf(a.log, "\t\tpts(n%d) += n%d\n", ptr, label)
 	}
@@ -298,14 +221,10 @@ func (a *analysis) addLabel(ptr, label nodeid) bool {
 }
 
 func (a *analysis) addWork(id nodeid) {
-	a.cycleCandidates.add(a.nodes[id].solve.find().id)
-	/*
-		id = a.nodes[id].solve.find().id
-		a.work.Insert(int(id))
-		if a.log != nil {
-			fmt.Fprintf(a.log, "\t\twork: n%d\n", id)
-		}
-	*/
+	a.work[a.find(id)] = struct{}{}
+	if a.log != nil {
+		fmt.Fprintf(a.log, "\t\twork: n%d\n", id)
+	}
 }
 
 // onlineCopy adds a copy edge.  It is called online, i.e. during
@@ -315,19 +234,14 @@ func (a *analysis) addWork(id nodeid) {
 // The size of the copy is implicitly 1.
 // It returns true if pts(dst) changed.
 func (a *analysis) onlineCopy(dst, src nodeid) bool {
-	ndst := a.nodes[dst].solve.find()
-	nsrc := a.nodes[src].solve.find()
-	if ndst.id != nsrc.id {
-		if nsrc.copyTo.add(ndst.id) {
-			a.cycleCandidates.add(nsrc.id)
+	if dst != src {
+		if nsrc := a.nodes[src]; nsrc.solve.copyTo.add(dst) {
 			if a.log != nil {
-				fmt.Fprintf(a.log, "\t\t\tdynamic copy n%d <- n%d\n", ndst.id, nsrc.id)
+				fmt.Fprintf(a.log, "\t\t\tdynamic copy n%d <- n%d\n", dst, src)
 			}
-			// TODO(adonovan): most calls to onlineCopy
-			// are followed by addWork, possibly batched
-			// via a 'changed' flag; see if there's a
-			// noticeable penalty to calling addWork here.
-			return ndst.pts.addAll(&nsrc.prevPTS)
+
+			a.addWork(dst)
+			return a.nodes[dst].solve.pts.addAll(&nsrc.solve.prevPTS)
 		}
 	}
 	return false
@@ -377,7 +291,7 @@ func (c *offsetAddrConstraint) solve(a *analysis, delta *nodeset) {
 	dst := a.nodes[c.dst]
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		k := nodeid(x)
-		if dst.solve.find().pts.add(k + nodeid(c.offset)) {
+		if dst.solve.pts.add(k + nodeid(c.offset)) {
 			a.addWork(c.dst)
 		}
 	}
