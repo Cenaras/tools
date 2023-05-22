@@ -13,12 +13,12 @@ type nuutila struct {
 
 func (nuu *nuutila) visitAll() {
 	//for x, _ := range nuu.a.nodes {
-	for x, _ := range nuu.a.work {
+	for x, _ := range nuu.a.nodes {
 		if id := nodeid(x); nuu.a.find(id) == id && nuu.D[id] == 0 {
 			nuu.visit(id)
 		}
 	}
-	nuu.a.work = make(map[nodeid]struct{})
+	//nuu.a.work = make(map[nodeid]struct{})
 }
 
 func (nuu *nuutila) visit(v nodeid) {

@@ -219,10 +219,12 @@ func (a *analysis) addLabel(ptr, label nodeid) bool {
 }
 
 func (a *analysis) addWork(id nodeid) {
-	a.work[a.find(id)] = struct{}{}
-	if a.log != nil {
-		fmt.Fprintf(a.log, "\t\twork: n%d\n", id)
-	}
+	/*
+		a.work[a.find(id)] = struct{}{}
+		if a.log != nil {
+			fmt.Fprintf(a.log, "\t\twork: n%d\n", id)
+		}
+	*/
 }
 
 // onlineCopy adds a copy edge.  It is called online, i.e. during

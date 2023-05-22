@@ -125,10 +125,10 @@ type analysis struct {
 	localobj    map[ssa.Value]nodeid        // maps v to sole member of pts(v), if singleton
 	atFuncs     map[*ssa.Function]bool      // address-taken functions (for presolver)
 	mapValues   []nodeid                    // values of makemap objects (indirect in HVN)
-	work        map[nodeid]struct{}         // solver's worklist
-	result      *Result                     // results of the analysis
-	track       track                       // pointerlike types whose aliasing we track
-	deltaSpace  []int                       // working space for iterating over PTS deltas
+	//work        map[nodeid]struct{}         // solver's worklist
+	result     *Result // results of the analysis
+	track      track   // pointerlike types whose aliasing we track
+	deltaSpace []int   // working space for iterating over PTS deltas
 
 	waveConstraints []*waveConstraint
 
@@ -246,7 +246,7 @@ func Analyze(config *Config) (result *Result, err error) {
 			IndirectQueries: make(map[ssa.Value]Pointer),
 		},
 		deltaSpace: make([]int, 0, 100),
-		work:       make(map[nodeid]struct{}),
+		//work:       make(map[nodeid]struct{}),
 	}
 
 	if false {
