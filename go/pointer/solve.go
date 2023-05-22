@@ -58,13 +58,13 @@ func (a *analysis) solve() {
 
 		if x, ok := a.hybridMap[id]; ok {
 			var r map[nodeid]nodeid = make(map[nodeid]nodeid)
-			var checkers nodeset
-			
+			var checkers = make(map[nodeid]struct{})
+
 			for _, v := range delta.AppendTo(a.deltaSpace) {
 				r[a.find(nodeid(v))] = x
-				checkers.add(a.find(nodeid(v)))
+				checkers[a.find(nodeid(v))] = struct{}{}
 			}
-			unify(a, &checkers, r)
+			unify(a, checkers, r)
 		}
 
 		// Apply all resolution rules attached to n.
