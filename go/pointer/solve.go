@@ -184,9 +184,9 @@ func (a *analysis) solveConstraints(n *node, delta *nodeset, detectCycles bool) 
 			if a.log != nil {
 				fmt.Fprintf(a.log, "\t\tDETECT AND COLLAPSE CYCLES %d -> %d\n", a.find(n.rep), mid)
 			}
-			nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid)}
+			nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid), C: make(map[nodeid]struct{}), InCycles: make(map[nodeid]struct{})}
 			nuu.visit(mid)
-			unify(a, &nuu.InCycles, nuu.R)
+			unify(a, nuu.InCycles, nuu.R)
 			n.solve.checkedLazy.add(mid)
 		}
 		if copySeen.add(mid) {
