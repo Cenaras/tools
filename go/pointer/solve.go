@@ -298,6 +298,9 @@ func (c *offsetAddrConstraint) solve(a *analysis, delta *nodeset) {
 func (c *typeFilterConstraint) solve(a *analysis, delta *nodeset) {
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		ifaceObj := nodeid(x)
+		if (ifaceObj == a.nilNode) {
+			continue
+		}
 		tDyn, _, indirect := a.taggedValue(ifaceObj)
 		if indirect {
 			// TODO(adonovan): we'll need to implement this
@@ -320,6 +323,9 @@ func (c *untagConstraint) solve(a *analysis, delta *nodeset) {
 	}
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		ifaceObj := nodeid(x)
+		if (ifaceObj == a.nilNode) {
+			continue
+		}
 		tDyn, v, indirect := a.taggedValue(ifaceObj)
 		if indirect {
 			// TODO(adonovan): we'll need to implement this
@@ -342,6 +348,9 @@ func (c *untagConstraint) solve(a *analysis, delta *nodeset) {
 func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		ifaceObj := nodeid(x)
+		if (ifaceObj == a.nilNode) {
+			continue
+		}
 		tDyn, v, indirect := a.taggedValue(ifaceObj)
 		if indirect {
 			// TODO(adonovan): we may need to implement this if

@@ -495,6 +495,9 @@ func (a *analysis) genAppend(instr *ssa.Call, cgn *cgnode) {
 	// TODO(adonovan): test append([]byte, ...string) []byte.
 
 	y := instr.Call.Args[1]
+	if v, ok := y.(*ssa.Const); ok && v.IsNil() {
+		return
+	}
 	tArray := sliceToArray(instr.Call.Args[0].Type())
 
 	w := a.nextNode()

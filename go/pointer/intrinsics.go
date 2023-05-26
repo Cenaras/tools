@@ -251,6 +251,9 @@ func (c *runtimeSetFinalizerConstraint) String() string {
 
 func (c *runtimeSetFinalizerConstraint) solve(a *analysis, delta *nodeset) {
 	for _, fObj := range delta.AppendTo(a.deltaSpace) {
+		if (nodeid(fObj) == a.nilNode) {
+			continue
+		}
 		tDyn, f, indirect := a.taggedValue(nodeid(fObj))
 		if indirect {
 			// TODO(adonovan): we'll need to implement this
