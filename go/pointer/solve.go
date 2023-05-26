@@ -266,6 +266,9 @@ func (c *loadConstraint) solve(a *analysis, delta *nodeset) {
 	var changed bool
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		k := nodeid(x)
+		if (k == a.nilNode) {
+			continue
+		}
 		koff := k + nodeid(c.offset)
 		if a.onlineCopy(c.dst, koff) {
 			changed = true
@@ -279,6 +282,9 @@ func (c *loadConstraint) solve(a *analysis, delta *nodeset) {
 func (c *storeConstraint) solve(a *analysis, delta *nodeset) {
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		k := nodeid(x)
+		if (k == a.nilNode) {
+			continue
+		}
 		koff := k + nodeid(c.offset)
 		if a.onlineCopy(koff, c.src) {
 			a.addWork(koff)
@@ -290,6 +296,9 @@ func (c *offsetAddrConstraint) solve(a *analysis, delta *nodeset) {
 	dst := a.nodes[c.dst]
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		k := nodeid(x)
+		if (k == a.nilNode) {
+			continue
+		}
 		if dst.solve.pts.add(k + nodeid(c.offset)) {
 			a.addWork(c.dst)
 		}
@@ -428,6 +437,9 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 func (c *dynamicCallConstraint) solve(a *analysis, delta *nodeset) {
 	for _, x := range delta.AppendTo(a.deltaSpace) {
 		proxyNode := nodeid(x)
+		if (proxyNode == a.nilNode) {
+			continue
+		}
 
 		// Look up the concrete method.
 		fn := a.proxyFuncNodes[proxyNode]
