@@ -359,8 +359,8 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 			// e.g. for (reflect.Value).Call.
 			panic("indirect tagged object")
 		}
-
-		if tDyn == nil {
+		test, test2 := tDyn.(*types.Pointer);
+		if test2 && test == nil {
 			log.Printf("Constraint %s\nifaceobj: %s", c, ifaceObj)
 		}
 
