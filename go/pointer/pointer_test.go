@@ -51,17 +51,17 @@ var inputs = []string{
 	"testdata/flow.go",
 	"testdata/fmtexcerpt.go",
 	"testdata/func.go",
-	//"testdata/funcreflect.go",
+	"testdata/funcreflect.go",
 	//"testdata/hello.go", // NB: causes spurious failure of HVN cross-check
 	"testdata/interfaces.go",
 	"testdata/issue9002.go",
-	//"testdata/mapreflect.go",
+	"testdata/mapreflect.go",
 	"testdata/maps.go",
 	"testdata/panic.go",
 	"testdata/recur.go",
-	//"testdata/reflect.go",
-	//"testdata/rtti.go",
-	//"testdata/structreflect.go",
+	"testdata/reflect.go",
+	"testdata/rtti.go",
+	"testdata/structreflect.go",
 	"testdata/structs.go",
 	"testdata/timer.go", // TODO(adonovan): fix broken assumptions about runtime timers
 }

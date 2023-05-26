@@ -1403,7 +1403,7 @@ func (a *analysis) generate() {
 	// Create nodes and constraints for all methods of reflect.rtype.
 	// (Shared contours are used by dynamic calls to reflect.Type
 	// methods---typically just String().)
-	if rtype := a.reflectRtypePtr; rtype != nil {
+	if rtype := a.reflectRtypePtr; a.config.Reflection && rtype != nil {
 		a.genMethodsOf(rtype)
 	}
 

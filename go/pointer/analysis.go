@@ -289,7 +289,7 @@ func Analyze(config *Config) (result *Result, err error) {
 		}
 	}
 
-	if reflect := a.prog.ImportedPackage("reflect"); a.config.Reflection && reflect != nil {
+	if reflect := a.prog.ImportedPackage("reflect"); reflect != nil {
 		rV := reflect.Pkg.Scope().Lookup("Value")
 		a.reflectValueObj = rV
 		a.reflectValueCall = a.prog.LookupMethod(rV.Type(), nil, "Call")
