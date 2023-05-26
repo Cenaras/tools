@@ -10,6 +10,7 @@ package pointer
 import (
 	"fmt"
 	"go/types"
+	"log"
 )
 
 type solverState struct {
@@ -357,6 +358,10 @@ func (c *invokeConstraint) solve(a *analysis, delta *nodeset) {
 			// we ever apply invokeConstraints to reflect.Value PTSs,
 			// e.g. for (reflect.Value).Call.
 			panic("indirect tagged object")
+		}
+
+		if tDyn == nil {
+			log.Printf("Constraint %s\nifaceobj: %s", c, ifaceObj)
 		}
 
 		// Look up the concrete method.

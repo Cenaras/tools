@@ -43,7 +43,7 @@ var inputs = []string{
 	//"testdata/arrayreflect.go",
 	"testdata/arrays.go",
 	"testdata/channels.go",
-	//"testdata/chanreflect.go",
+	"testdata/chanreflect.go",
 	"testdata/context.go",
 	"testdata/conv.go",
 	"testdata/extended.go",
