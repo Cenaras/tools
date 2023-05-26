@@ -413,3 +413,117 @@ func (cs *S2ObjH) TreatStaticInvoke() bool {
 func (cs *S2ObjH) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
 	return true
 }
+
+
+type S1Call struct {
+	DoTreatStaticInvoke bool
+}
+
+type S1CallContext struct {
+	invo ssa.CallInstruction
+	heap ssa.Value
+}
+
+type S1CallHeapContext struct {
+	invo ssa.CallInstruction
+}
+
+func (hc *S1CallHeapContext) String() string {
+	if hc.invo != nil {
+		return hc.invo.String() + strconv.Itoa(int(hc.invo.Pos()))
+	} else {
+		return ""
+	}
+}
+
+func (c *S1CallContext) String() string {
+	str := ""
+	if c.invo != nil {
+		str = str + c.invo.String() + strconv.Itoa(int(c.invo.Pos()))
+	}
+	if c.heap != nil {
+		str = str + c.heap.String() + strconv.Itoa(int(c.heap.Pos()))
+	}
+	return str
+}
+
+func (cs *S1Call) Record(value ssa.Value, ctx Context) HeapContext {
+	return &S1CallHeapContext{ctx.(*S1CallContext).invo}
+}
+func (cs *S1Call) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S1CallContext{invo: ctx.(*S1CallContext).invo, heap: value}
+}
+func (cs *S1Call) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S1CallContext{invo: callLabel, heap: nil}
+}
+func (cs *S1Call) EmptyContext() Context {
+	return &S1CallContext{}
+}
+func (cs *S1Call) EmptyHeapContext() HeapContext {
+	return &S1CallHeapContext{}
+}
+
+func (cs *S1Call) TreatStaticInvoke() bool {
+	return cs.DoTreatStaticInvoke
+}
+
+func (cs *S1Call) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
+	return true
+}
+
+type S2Call struct {
+	DoTreatStaticInvoke bool
+}
+
+type S2CallContext struct {
+	arg1 ContextArg
+	arg2 ContextArg
+}
+
+type S2CallHeapContext struct {
+	arg ContextArg
+}
+
+func (c *S2CallContext) String() string {
+	str := ""
+	if c.arg1 != nil {
+		str = str + c.arg1.String() + strconv.Itoa(int(c.arg1.Pos()))
+	}
+	if c.arg2 != nil {
+		str = str + c.arg2.String() + strconv.Itoa(int(c.arg2.Pos()))
+	}
+	return str
+}
+
+func (c *S2CallHeapContext) String() string {
+	str := ""
+	if c.arg != nil {
+		str = str + c.arg.String() + strconv.Itoa(int(c.arg.Pos()))
+	}
+	return str
+}
+
+func (cs *S2Call) Record(value ssa.Value, ctx Context) HeapContext {
+	return &S2CallHeapContext{arg: ctx.(*S2CallContext).arg1}
+}
+func (cs *S2Call) Merge(value ssa.Value, hctx HeapContext, callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S2CallContext{arg1: value, arg2: hctx.(*S2CallHeapContext).arg}
+}
+func (cs *S2Call) MergeStatic(callLabel ssa.CallInstruction, ctx Context) Context {
+	return &S2CallContext{arg1: callLabel, arg2: ctx.(*S2CallContext).arg1}
+}
+func (cs *S2Call) EmptyContext() Context {
+	return &S2CallContext{}
+}
+func (cs *S2Call) EmptyHeapContext() HeapContext {
+	return &S2CallHeapContext{}
+}
+
+func (cs *S2Call) TreatStaticInvoke() bool {
+	return cs.DoTreatStaticInvoke
+}
+
+func (cs *S2Call) ShouldUseContext(fn *ssa.Function, a *analysis) bool {
+	return true
+}
+
