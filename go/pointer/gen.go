@@ -495,9 +495,9 @@ func (a *analysis) genAppend(instr *ssa.Call, cgn *cgnode) {
 	// TODO(adonovan): test append([]byte, ...string) []byte.
 
 	y := instr.Call.Args[1]
-	if v, ok := y.(*ssa.Const); ok && v.IsNil() {
-		return
-	}
+	//if v, ok := y.(*ssa.Const); ok && v.IsNil() {
+	//	return
+	//}
 	tArray := sliceToArray(instr.Call.Args[0].Type())
 
 	w := a.nextNode()
@@ -852,7 +852,7 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 				a.proxyFuncNodes[obj] = v
 
 			case *ssa.Const:
-				if v.IsNil() {
+				if nillable(v.Type()) && v.IsNil() {
 					obj = a.nilNode
 				}
 
@@ -957,6 +957,17 @@ func (a *analysis) objectNode(cgn *cgnode, v ssa.Value) nodeid {
 		a.localobj[v] = obj
 	}
 	return obj
+}
+
+func nillable(t types.Type) bool {
+	switch t.Underlying().(type) {
+	case *types.Pointer:
+		return true
+	//case *types.Interface:
+	//	return true // basic interface.
+	default:
+		return false
+	}
 }
 
 // genLoad generates constraints for result = *(ptr + val).

@@ -54,7 +54,7 @@ func func3() {
 		}
 		return
 	}()
-	print(x) // @pointsto command-line-arguments.a
+	print(x) // @pointsto command-line-arguments.a | nil
 	print(y) // @pointsto command-line-arguments.b | command-line-arguments.c
 }
 
