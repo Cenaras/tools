@@ -1,5 +1,10 @@
 package pointer
 
+import (
+	"fmt"
+	"os"
+)
+
 type nuutila struct {
 	a        *analysis
 	I        int
@@ -13,6 +18,7 @@ type nuutila struct {
 
 func (nuu *nuutila) visitAll() {
 	//for x, _ := range nuu.a.nodes {
+	fmt.Fprintf(os.Stdout, "Size of l_changed: %d", len(nuu.a.work))
 	for x, _ := range nuu.a.work {
 		if id := nodeid(x); nuu.a.find(id) == id && nuu.D[id] == 0 {
 			nuu.visit(id)

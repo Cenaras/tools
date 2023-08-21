@@ -10,6 +10,8 @@ package pointer
 import (
 	"fmt"
 	"go/types"
+	"os"
+	"time"
 )
 
 type solverState struct {
@@ -43,18 +45,19 @@ func (a *analysis) puSolve() {
 				}
 			}
 		*/
-		//start = time.Now()
+		start := time.Now()
 		//Detect and collapse cycles
 		nuu := &nuutila{a: a, I: 0, D: make(map[nodeid]int), R: make(map[nodeid]nodeid), C: make(map[nodeid]struct{}), InCycles: make(map[nodeid]struct{})}
 		nuu.visitAll()
-		//fmt.Fprintf(os.Stdout, "Elapsed time for detect cycles: %f\n", time.Since(start).Seconds())
 		//start = time.Now()
 		unify(a, nuu.InCycles, nuu.R)
+		fmt.Fprintf(os.Stdout, "Time spent for SCC detection: %f\n", time.Since(start).Seconds())
 		//fmt.Fprintf(os.Stdout, "Elapsed time for collapse cycles: %f\n", time.Since(start).Seconds())
 
-		//start = time.Now()
+		start = time.Now()
 		// Wave propagation
 		t := nuu.T
+		fmt.Fprintf(os.Stdout, "Wave propagation over %d elements", len(t))
 		for len(t) != 0 {
 			v := t[len(t)-1]
 			t = t[:len(t)-1]
@@ -72,9 +75,9 @@ func (a *analysis) puSolve() {
 			}
 		}
 
-		//fmt.Fprintf(os.Stdout, "Elapsed time for label propagation: %f\n", time.Since(start).Seconds())
+		fmt.Fprintf(os.Stdout, "Time spent for propagation: %f\n", time.Since(start).Seconds())
 
-		//start = time.Now()
+		start = time.Now()
 		//var changed bool = false
 		complexWork := a.work
 		a.work = make(map[nodeid]struct{})
@@ -90,7 +93,7 @@ func (a *analysis) puSolve() {
 				c.constraint.solve(a, &diff)
 			}
 		}
-		//fmt.Fprintf(os.Stdout, "Elapsed time for complex constraints: %f\n", time.Since(start).Seconds())
+		fmt.Fprintf(os.Stdout, "Time spent for solving complex constraints: %f\n", time.Since(start).Seconds())
 		if len(a.work) == 0 && len(a.constraints) == 0 {
 			break
 		}
