@@ -57,7 +57,7 @@ func (a *analysis) puSolve() {
 		start = time.Now()
 		// Wave propagation
 		t := nuu.T
-		fmt.Fprintf(os.Stdout, "Wave propagation over %d elements", len(t))
+		fmt.Fprintf(os.Stdout, "Wave propagation over #nodes: %d", len(t))
 		for len(t) != 0 {
 			v := t[len(t)-1]
 			t = t[:len(t)-1]
