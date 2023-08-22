@@ -37,6 +37,7 @@ func (a *analysis) puSolve() {
 	//first := true
 	iterations := 0
 	for {
+		iterations++
 		//start := time.Now()
 		a.processNewConstraints()
 		//fmt.Fprintf(os.Stdout, "Elapsed time for new constraints: %f\n", time.Since(start).Seconds())
@@ -100,9 +101,7 @@ func (a *analysis) puSolve() {
 		if len(a.work) == 0 && len(a.constraints) == 0 {
 			break
 		}
-		iterations++
 		//fmt.Fprintf(os.Stdout, "Loop iteration %d\n", i)
-
 	}
 
 	if !a.nodes[0].solve.pts.IsEmpty() {
@@ -129,7 +128,7 @@ func (a *analysis) puSolve() {
 	}
 
 	fmt.Fprintf(os.Stdout, "PUS_TOTAL_TIME: %f\n", time.Since(solve_time).Seconds())
-	fmt.Fprintf(os.Stdout, "Iterations: %d", iterations)
+	fmt.Fprintf(os.Stdout, "Iterations: %d\n\n", iterations)
 }
 
 // processNewConstraints takes the new constraints from a.constraints
