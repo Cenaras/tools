@@ -28,11 +28,14 @@ type waveConstraint struct {
 
 func (a *analysis) puSolve() {
 	start("Solving")
+
+	solve_time := time.Now()
+
 	if a.log != nil {
 		fmt.Fprintf(a.log, "\n\n==== Solving constraints\n\n")
 	}
 	//first := true
-	i := 0
+	iterations := 0
 	for {
 		//start := time.Now()
 		a.processNewConstraints()
@@ -97,7 +100,7 @@ func (a *analysis) puSolve() {
 		if len(a.work) == 0 && len(a.constraints) == 0 {
 			break
 		}
-		i++
+		iterations++
 		//fmt.Fprintf(os.Stdout, "Loop iteration %d\n", i)
 
 	}
@@ -124,6 +127,9 @@ func (a *analysis) puSolve() {
 			}
 		}
 	}
+
+	fmt.Fprintf(os.Stdout, "PUS_TOTAL_TIME: %f\n", time.Since(solve_time).Seconds())
+	fmt.Fprintf(os.Stdout, "Iterations: %d", iterations)
 }
 
 // processNewConstraints takes the new constraints from a.constraints
