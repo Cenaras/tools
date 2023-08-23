@@ -29,6 +29,8 @@ type waveConstraint struct {
 func (a *analysis) puSolve() {
 	start("Solving")
 
+	fmt.Fprintf(os.Stdout, "Solving %d constraints", len(a.constraints))
+
 	solve_time := time.Now()
 
 	if a.log != nil {
@@ -98,6 +100,7 @@ func (a *analysis) puSolve() {
 			}
 		}
 		fmt.Fprintf(os.Stdout, "Time spent for solving complex constraints: %f\n", time.Since(start).Seconds())
+		// a.work: No changed nodes. a.constraints: No new constraints added (due to reflection?)
 		if len(a.work) == 0 && len(a.constraints) == 0 {
 			break
 		}
@@ -167,8 +170,9 @@ func (a *analysis) processNewConstraints() {
 			// simple (copy) constraint
 			id = c.src
 			a.nodes[id].solve.copyTo.add(c.dst)
-			a.nodes[c.dst].solve.pts.addAll(&a.nodes[id].solve.prevPTS)
-			a.addWork(c.dst)
+			// MRL - is this not redundant?
+			//a.nodes[c.dst].solve.pts.addAll(&a.nodes[id].solve.prevPTS)
+			//a.addWork(c.dst)
 		default:
 			// complex constraint
 			id = c.ptr()
