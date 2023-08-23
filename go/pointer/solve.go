@@ -171,8 +171,8 @@ func (a *analysis) processNewConstraints() {
 			id = c.src
 			a.nodes[id].solve.copyTo.add(c.dst)
 			// MRL - is this not redundant?
-			//a.nodes[c.dst].solve.pts.addAll(&a.nodes[id].solve.prevPTS)
-			//a.addWork(c.dst)
+			a.nodes[c.dst].solve.pts.addAll(&a.nodes[id].solve.prevPTS)
+			a.addWork(c.dst)
 		default:
 			// complex constraint
 			id = c.ptr()
