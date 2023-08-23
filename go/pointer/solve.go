@@ -85,7 +85,7 @@ func (a *analysis) puSolve() {
 
 		start = time.Now()
 		//var changed bool = false
-		complexWork := a.work
+		complexWork := a.nodes
 		a.work = make(map[nodeid]struct{})
 		for n, _ := range complexWork {
 			nsolve := a.nodes[n].solve

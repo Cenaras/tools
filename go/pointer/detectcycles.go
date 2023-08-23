@@ -19,7 +19,7 @@ type nuutila struct {
 func (nuu *nuutila) visitAll() {
 	//for x, _ := range nuu.a.nodes {
 	fmt.Fprintf(os.Stdout, "Size of l_changed: %d\n", len(nuu.a.work))
-	for x, _ := range nuu.a.work {
+	for x, _ := range nuu.a.nodes {
 		if id := nodeid(x); nuu.a.find(id) == id && nuu.D[id] == 0 {
 			nuu.visit(id)
 		}
