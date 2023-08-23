@@ -29,7 +29,7 @@ type waveConstraint struct {
 func (a *analysis) puSolve() {
 	start("Solving")
 
-	fmt.Fprintf(os.Stdout, "Solving %d constraints", len(a.constraints))
+	fmt.Fprintf(os.Stdout, "Solving %d constraints\n", len(a.constraints))
 
 	solve_time := time.Now()
 
